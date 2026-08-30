@@ -1,0 +1,11 @@
+{
+  "Home": {
+    "title": "Plateforme d'apprentissage professionnelle",
+    "subtitle": "Apprenez sans limites - Universitaire, professionnel, préparatoire et cours personnalisés"
+  },
+  "Auth": {
+    "oauthCallbackProcessing": "Finalisation de la connexion...",
+    "oauthCallbackError": "Impossible de terminer la connexion",
+    "oauthCallbackErrorHint": "Une erreur s'est produite lors de l'authentification avec le compte externe. Réessayez ou utilisez l'e-mail et le mot de passe."
+  }
+}

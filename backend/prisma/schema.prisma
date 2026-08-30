@@ -1,0 +1,1268 @@
+// ============================================================
+// Prisma Schema - منصة تعليمية إلكترونية احترافية
+// يعكس التصميم المعماري المتفق عليه عبر جلسة التصميم الكاملة
+// ============================================================
+
+generator client {
+  provider        = "prisma-client-js"
+  // Driver Adapters (عبر @prisma/adapter-pg) تُلغي الحاجة الكاملة لتحميل Query Engine
+  // الثنائي (native binary) من binaries.prisma.sh عند `prisma generate`/`npm install` -
+  // هذا التحميل يفشل بكثرة خلف جدران حماية مؤسسية أو شبكات مقيَّدة، ويوقف البناء
+  // بالكامل رغم أن كل الكود سليم. الاتصال هنا يتم عبر حزمة `pg` القياسية مباشرة.
+  previewFeatures = ["driverAdapters"]
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ============================================================
+// 1) المصادقة والمستخدمون
+// ============================================================
+
+enum RegistrationType {
+  self_service
+  staff_invitation
+  oauth
+}
+
+enum Locale {
+  ar
+  en
+  fr
+  tl
+}
+
+enum UserStatus {
+  pending_verification
+  active
+  suspended
+}
+
+model User {
+  id                 String            @id @default(uuid())
+  email              String?           @unique
+  phone              String?           @unique
+  passwordHash       String?           @map("password_hash")
+  isStaff            Boolean           @default(false) @map("is_staff")
+  registrationType   RegistrationType  @map("registration_type")
+  preferredLocale    Locale            @default(en) @map("preferred_locale")
+  status             UserStatus        @default(pending_verification)
+  emailVerifiedAt    DateTime?         @map("email_verified_at")
+  phoneVerifiedAt    DateTime?         @map("phone_verified_at")
+  lastLoginDeviceId  String?           @map("last_login_device_id")
+  createdAt          DateTime          @default(now()) @map("created_at")
+  updatedAt          DateTime          @updatedAt @map("updated_at")
+
+  // علاقات
+  roles              UserRole[]
+  devices            UserDevice[]
+  authProviders      AuthProvider[]
+  refreshTokens      RefreshToken[]
+  instructorProfile  InstructorProfile?
+  activityLogs       ActivityLog[]     @relation("ActorLogs")
+  sentInvitations    StaffInvitation[] @relation("InvitedBy")
+  enrollments        Enrollment[]
+  customRequestsAsStudent   CustomRequest[] @relation("StudentRequests")
+  customRequestsAsInstructor CustomRequest[] @relation("InstructorRequests")
+
+  // علاقات مالية
+  payments                  Payment[]
+  paymentPlans              PaymentPlan[]
+  savedPaymentMethods       SavedPaymentMethod[]
+  instructorEarnings        InstructorEarning[]        @relation("InstructorEarnings")
+  instructorPayouts         InstructorPayout[]         @relation("InstructorPayouts")
+  approvedPayoutsFirst      InstructorPayout[]         @relation("FirstApprover")
+  approvedPayoutsSecond     InstructorPayout[]         @relation("SecondApprover")
+  commissionAgreements      InstructorCommissionAgreement[] @relation("InstructorAgreements")
+
+  // علاقات الأمان
+  videoPlaybackSessions     VideoPlaybackSession[]
+  videoSecurityEvents       VideoSecurityEvent[]
+  securityReviewCasesOwned  SecurityReviewCase[]       @relation("ReviewCaseUser")
+  securityReviewCasesAssigned SecurityReviewCase[]     @relation("ReviewCaseAssignee")
+
+  // علاقات الذكاء الاصطناعي والتقارير
+  aiInteractions            AiInteraction[]
+  generatedReports          GeneratedReport[]
+  reportSchedules           ReportSchedule[]
+
+  @@map("users")
+}
+
+// طرق الدخول المرتبطة (Account Linking لـ OAuth)
+enum AuthProviderType {
+  local
+  google
+  microsoft
+}
+
+model AuthProvider {
+  id               String            @id @default(uuid())
+  userId           String            @map("user_id")
+  user             User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  provider         AuthProviderType
+  providerUserId   String            @map("provider_user_id")
+  providerEmail    String?           @map("provider_email")
+  linkedAt         DateTime          @default(now()) @map("linked_at")
+
+  @@unique([provider, providerUserId])
+  @@map("auth_providers")
+}
+
+// إدارة الجلسات (منع الاستخدام المتزامن)
+model UserDevice {
+  id                 String   @id @default(uuid())
+  userId             String   @map("user_id")
+  user               User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  deviceFingerprint  String   @map("device_fingerprint")
+  sessionToken       String   @unique @map("session_token")
+  isActive           Boolean  @default(true) @map("is_active")
+  ipAddress          String?  @map("ip_address")
+  userAgent          String?  @map("user_agent")
+  lastSeenAt         DateTime @default(now()) @map("last_seen_at")
+  createdAt          DateTime @default(now()) @map("created_at")
+
+  @@map("user_devices")
+}
+
+// Refresh Token rotation - كل Refresh Token يُستخدم مرة واحدة فقط (Rotation).
+// إعادة استخدام Token مُستهلك أو مُبطَل = دليل على سرقة الجلسة → إبطال كل عائلة التوكنات
+// (family) المرتبطة فورًا كإجراء احترازي.
+model RefreshToken {
+  id           String    @id @default(uuid())
+  userId       String    @map("user_id")
+  user         User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  tokenHash    String    @unique @map("token_hash")
+  familyId     String    @map("family_id")
+  deviceId     String?   @map("device_id")
+  revokedAt    DateTime? @map("revoked_at")
+  replacedBy   String?   @map("replaced_by")
+  ipAddress    String?   @map("ip_address")
+  userAgent    String?   @map("user_agent")
+  expiresAt    DateTime  @map("expires_at")
+  createdAt    DateTime  @default(now()) @map("created_at")
+
+  @@index([userId])
+  @@index([familyId])
+  @@map("refresh_tokens")
+}
+
+// ============================================================
+// 2) OTP والتحقق
+// ============================================================
+
+enum OtpChannel {
+  email
+  sms
+  whatsapp
+}
+
+enum OtpPurpose {
+  registration
+  login_2fa
+  password_reset
+  phone_change
+}
+
+model OtpVerification {
+  id             String      @id @default(uuid())
+  userId         String?     @map("user_id")
+  identifier     String      // البريد أو رقم الهاتف
+  channel        OtpChannel
+  codeHash       String      @map("code_hash")
+  purpose        OtpPurpose
+  attemptsCount  Int         @default(0) @map("attempts_count")
+  maxAttempts    Int         @default(5) @map("max_attempts")
+  expiresAt      DateTime    @map("expires_at")
+  verifiedAt     DateTime?   @map("verified_at")
+  createdAt      DateTime    @default(now()) @map("created_at")
+
+  @@index([identifier, purpose])
+  @@map("otp_verifications")
+}
+
+// ============================================================
+// 3) RBAC - الأدوار والصلاحيات
+// ============================================================
+
+model Role {
+  id           String           @id @default(uuid())
+  name         String           @unique // 'super_admin','content_admin','finance_manager'...
+  description  String?
+  isSystemRole Boolean          @default(false) @map("is_system_role")
+  createdAt    DateTime         @default(now()) @map("created_at")
+
+  permissions  RolePermission[]
+  userRoles    UserRole[]
+  invitations  StaffInvitation[]
+
+  @@map("roles")
+}
+
+model Permission {
+  id       String @id @default(uuid())
+  resource String // 'courses','custom_requests','payments'...
+  action   String // 'create','read','update','delete','approve','export'
+
+  roles    RolePermission[]
+
+  @@unique([resource, action])
+  @@map("permissions")
+}
+
+model RolePermission {
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  permission   Permission @relation(fields: [permissionId], references: [id], onDelete: Cascade)
+
+  @@id([roleId, permissionId])
+  @@map("role_permissions")
+}
+
+model UserRole {
+  userId     String   @map("user_id")
+  roleId     String   @map("role_id")
+  user       User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+  role       Role     @relation(fields: [roleId], references: [id], onDelete: Cascade)
+  assignedBy String?  @map("assigned_by")
+  assignedAt DateTime @default(now()) @map("assigned_at")
+
+  @@id([userId, roleId])
+  @@map("user_roles")
+}
+
+// دعوات الموظفين (Staff Invitation Flow)
+enum InvitationStatus {
+  pending
+  accepted
+  expired
+  revoked
+}
+
+model StaffInvitation {
+  id             String            @id @default(uuid())
+  email          String
+  invitedRoleId  String            @map("invited_role_id")
+  role           Role              @relation(fields: [invitedRoleId], references: [id])
+  invitedById    String            @map("invited_by")
+  invitedBy      User              @relation("InvitedBy", fields: [invitedById], references: [id])
+  token          String            @unique
+  status         InvitationStatus  @default(pending)
+  expiresAt      DateTime          @map("expires_at")
+  createdAt      DateTime          @default(now()) @map("created_at")
+
+  @@map("staff_invitations")
+}
+
+// سجل النشاط الشامل
+model ActivityLog {
+  id           String   @id @default(uuid())
+  actorId      String   @map("actor_id")
+  actor        User     @relation("ActorLogs", fields: [actorId], references: [id])
+  actorRole    String   @map("actor_role")
+  action       String   // 'course.publish','request.approve'...
+  resourceType String   @map("resource_type")
+  resourceId   String   @map("resource_id")
+  metadata     Json?
+  ipAddress    String?  @map("ip_address")
+  userAgent    String?  @map("user_agent")
+  createdAt    DateTime @default(now()) @map("created_at")
+
+  @@index([actorId, createdAt])
+  @@index([resourceType, resourceId])
+  @@map("activity_logs")
+}
+
+// ============================================================
+// 4) ملف المدرب (موافقة إدارية إلزامية)
+// ============================================================
+
+enum InstructorAccountStatus {
+  active_pending_approval
+  approved
+  rejected
+}
+
+enum PayoutFrequency {
+  weekly
+  biweekly
+  monthly
+}
+
+model InstructorProfile {
+  userId                    String                    @id @map("user_id")
+  user                      User                      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  accountStatus              InstructorAccountStatus   @default(active_pending_approval) @map("account_status")
+  bio                        String?
+  approvedBy                 String?                   @map("approved_by")
+  approvedAt                 DateTime?                 @map("approved_at")
+  payoutFrequency             PayoutFrequency           @default(monthly) @map("payout_frequency")
+  minimumPayoutThreshold      Decimal                   @default(50) @map("minimum_payout_threshold") @db.Decimal(10, 2)
+  isPayoutEligible            Boolean                   @default(true) @map("is_payout_eligible")
+  preferredPayoutMethod       PayoutMethod?             @map("preferred_payout_method")
+  // معرِّف حساب Stripe Connect (Express) الخاص بالمدرب - يُنشأ مرة واحدة عبر
+  // Stripe Connect Onboarding عند اختيار المدرب payout_method='stripe_connect'
+  stripeConnectAccountId      String?                   @map("stripe_connect_account_id")
+  // بريد PayPal المستلم لتحويلات PayPal Payouts API
+  paypalPayoutEmail           String?                   @map("paypal_payout_email")
+  lastPayoutGeneratedAt       DateTime?                 @map("last_payout_generated_at")
+
+  @@map("instructor_profiles")
+}
+
+// ============================================================
+// 5) الدورات (نمط Translation Table لدعم i18n كامل)
+// ============================================================
+
+enum CourseLevel {
+  university
+  professional
+  prep
+  short
+}
+
+enum CourseStatus {
+  draft
+  published
+  archived
+}
+
+model Course {
+  id             String              @id @default(uuid())
+  instructorId   String              @map("instructor_id")
+  price          Decimal             @db.Decimal(10, 2)
+  level          CourseLevel
+  status         CourseStatus        @default(draft)
+  thumbnailUrl   String?             @map("thumbnail_url")
+  createdAt      DateTime            @default(now()) @map("created_at")
+  updatedAt      DateTime            @updatedAt @map("updated_at")
+
+  translations   CourseTranslation[]
+  chapters       Chapter[]
+  enrollments    Enrollment[]
+
+  @@map("courses")
+}
+
+model CourseTranslation {
+  id              String   @id @default(uuid())
+  courseId        String   @map("course_id")
+  course          Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  locale          Locale
+  title           String
+  slug            String
+  description     String?
+  metaTitle       String?  @map("meta_title")
+  metaDescription String?  @map("meta_description")
+
+  @@unique([courseId, locale])
+  @@unique([locale, slug])
+  @@map("course_translations")
+}
+
+model Chapter {
+  id         String   @id @default(uuid())
+  courseId   String   @map("course_id")
+  course     Course   @relation(fields: [courseId], references: [id], onDelete: Cascade)
+  orderIndex Int      @map("order_index")
+
+  lessons    Lesson[]
+
+  @@map("chapters")
+}
+
+model Lesson {
+  id             String   @id @default(uuid())
+  chapterId      String   @map("chapter_id")
+  chapter        Chapter  @relation(fields: [chapterId], references: [id], onDelete: Cascade)
+  videoAssetId   String?  @map("video_asset_id")
+  orderIndex     Int      @map("order_index")
+  isFreePreview  Boolean  @default(false) @map("is_free_preview")
+
+  translations   LessonContent[]
+  playbackSessions VideoPlaybackSession[]
+
+  @@map("lessons")
+}
+
+// نص الدرس (عنوان + نسخة نصية/ملخص) لكل لغة - هذا هو المصدر الفعلي الذي يُقطَّع
+// (Chunking) ويُحوَّل لـ Embeddings في CourseContentEmbedding لخط أنابيب RAG.
+// بدونه لا يوجد أي نص فعلي للمحتوى (الدرس نفسه فيديو فقط)، لذلك أُضيف كنموذج
+// منفصل بدل حقل نصي مباشر على Lesson، متوافقًا مع استراتيجية i18n متعددة اللغات.
+model LessonContent {
+  id         String   @id @default(uuid())
+  lessonId   String   @map("lesson_id")
+  lesson     Lesson   @relation(fields: [lessonId], references: [id], onDelete: Cascade)
+  locale     Locale
+  title      String
+  transcript String   @db.Text // نص مكتوب للدرس (سكربت التسجيل أو ملخص تفصيلي يُدخله المدرب)
+  updatedAt  DateTime @updatedAt @map("updated_at")
+
+  @@unique([lessonId, locale])
+  @@map("lesson_content")
+}
+
+enum AccessStatus {
+  full
+  restricted
+  suspended
+}
+
+model Enrollment {
+  id               String        @id @default(uuid())
+  studentId        String        @map("student_id")
+  student          User          @relation(fields: [studentId], references: [id])
+  courseId         String        @map("course_id")
+  course           Course        @relation(fields: [courseId], references: [id])
+  progressPercent  Decimal       @default(0) @map("progress_percent") @db.Decimal(5, 2)
+  accessStatus     AccessStatus  @default(full) @map("access_status")
+  enrolledAt       DateTime      @default(now()) @map("enrolled_at")
+  completedAt      DateTime?     @map("completed_at")
+
+  @@unique([studentId, courseId])
+  @@map("enrollments")
+}
+
+// ============================================================
+// 6) الطلبات الخاصة (State Machine الكاملة)
+// ============================================================
+
+enum CustomRequestStatus {
+  draft
+  submitted
+  under_review
+  clarification_needed
+  priced
+  awaiting_student_approval
+  awaiting_payment
+  approved
+  assigned
+  in_production
+  in_internal_review
+  revision_requested
+  delivered
+  completed
+  disputed
+  rejected
+  cancelled
+}
+
+model CustomRequest {
+  id                     String               @id @default(uuid())
+  studentId              String               @map("student_id")
+  student                User                 @relation("StudentRequests", fields: [studentId], references: [id])
+  assignedInstructorId   String?              @map("assigned_instructor_id")
+  assignedInstructor     User?                @relation("InstructorRequests", fields: [assignedInstructorId], references: [id])
+  status                 CustomRequestStatus  @default(draft)
+  title                  String
+  notes                  String?
+  proposedPrice          Decimal?             @map("proposed_price") @db.Decimal(10, 2)
+  finalPrice             Decimal?             @map("final_price") @db.Decimal(10, 2)
+  estimatedDeliveryDays  Int?                 @map("estimated_delivery_days")
+  reviewedBy             String?              @map("reviewed_by")
+  createdAt              DateTime             @default(now()) @map("created_at")
+  updatedAt              DateTime             @updatedAt @map("updated_at")
+
+  files                  CustomRequestFile[]
+  statusLogs             CustomRequestStatusLog[]
+
+  @@map("custom_requests")
+}
+
+model CustomRequestFile {
+  id           String        @id @default(uuid())
+  requestId    String        @map("request_id")
+  request      CustomRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fileUrl      String        @map("file_url")
+  fileType     String        @map("file_type")
+  uploadedBy   String        @map("uploaded_by")
+  createdAt    DateTime      @default(now()) @map("created_at")
+
+  @@map("custom_request_files")
+}
+
+model CustomRequestStatusLog {
+  id          String        @id @default(uuid())
+  requestId   String        @map("request_id")
+  request     CustomRequest @relation(fields: [requestId], references: [id], onDelete: Cascade)
+  fromStatus  String?       @map("from_status")
+  toStatus    String        @map("to_status")
+  changedBy   String        @map("changed_by")
+  note        String?
+  createdAt   DateTime      @default(now()) @map("created_at")
+
+  @@map("custom_request_status_log")
+}
+
+// جدول قواعد الانتقال المركزي (State Machine Guard)
+model RequestStatusTransition {
+  id                String   @id @default(uuid())
+  fromStatus        String   @map("from_status")
+  toStatus          String   @map("to_status")
+  allowedRoles      Json     @map("allowed_roles") // ['requests_reviewer','super_admin']
+  requiresCondition String?  @map("requires_condition")
+
+  @@unique([fromStatus, toStatus])
+  @@map("request_status_transitions")
+}
+
+// ============================================================
+// 7) النظام المالي - العملة، البوابات، المدفوعات، الأقساط
+// ============================================================
+
+// ---------- العملة وسعر الصرف ----------
+
+model ExchangeRate {
+  id             String   @id @default(uuid())
+  baseCurrency   String   @default("USD") @map("base_currency")
+  targetCurrency String   @map("target_currency")
+  rate           Decimal  @db.Decimal(18, 8)
+  source         String   // 'openexchangerates','manual_override'
+  fetchedAt      DateTime @default(now()) @map("fetched_at")
+
+  @@index([targetCurrency, fetchedAt])
+  @@map("exchange_rates")
+}
+
+model CurrentExchangeRate {
+  targetCurrency String   @id @map("target_currency")
+  rate           Decimal  @db.Decimal(18, 8)
+  updatedAt      DateTime @updatedAt @map("updated_at")
+
+  @@map("current_exchange_rates")
+}
+
+// ---------- بوابات الدفع (Adapter Pattern في طبقة الكود) ----------
+
+enum GatewayProvider {
+  stripe
+  paypal
+  tabby
+  tamara
+}
+
+model PaymentGateway {
+  id                  String          @id @default(uuid())
+  provider            GatewayProvider @unique
+  isActive            Boolean         @default(true) @map("is_active")
+  supportedCountries  Json            @map("supported_countries") // ['SA','AE','KW'...]
+  supportedCurrencies Json            @map("supported_currencies")
+  displayPriority     Int             @default(0) @map("display_priority")
+  minAmount           Decimal?        @map("min_amount") @db.Decimal(10, 2)
+  maxAmount           Decimal?        @map("max_amount") @db.Decimal(10, 2)
+
+  payments            Payment[]
+
+  @@map("payment_gateways")
+}
+
+model SavedPaymentMethod {
+  id                       String         @id @default(uuid())
+  studentId                String         @map("student_id")
+  student                  User           @relation(fields: [studentId], references: [id])
+  gatewayId                String         @map("gateway_id")
+  gatewayCustomerId        String         @map("gateway_customer_id")
+  gatewayPaymentMethodId   String         @map("gateway_payment_method_id")
+  cardLast4                String?        @map("card_last4")
+  cardBrand                String?        @map("card_brand")
+  isDefault                Boolean        @default(false) @map("is_default")
+  createdAt                DateTime       @default(now()) @map("created_at")
+
+  @@map("saved_payment_methods")
+}
+
+// ---------- خطط الدفع بالتقسيط ----------
+
+enum PaymentPlanRelatedType {
+  course_enrollment
+  custom_request
+}
+
+enum PaymentPlanStatus {
+  active
+  completed
+  defaulted
+  cancelled
+}
+
+enum InstallmentManagement {
+  internal        // نظامنا يدير التحصيل (خصم من بطاقة محفوظة)
+  gateway_managed // BNPL (Tabby/Tamara) تدير التحصيل بنفسها
+}
+
+model PaymentPlan {
+  id                     String                  @id @default(uuid())
+  studentId              String                  @map("student_id")
+  student                User                    @relation(fields: [studentId], references: [id])
+  relatedType            PaymentPlanRelatedType   @map("related_type")
+  relatedId               String                  @map("related_id")
+  totalAmountUsd          Decimal                 @map("total_amount_usd") @db.Decimal(10, 2)
+
+  // تجميد سعر الصرف وقت الإنشاء - لا يتغير طوال عمر الخطة
+  billingCurrency         String                  @map("billing_currency")
+  lockedExchangeRate       Decimal                @map("locked_exchange_rate") @db.Decimal(18, 8)
+  billingAmountTotal       Decimal                @map("billing_amount_total") @db.Decimal(12, 2)
+
+  downPaymentAmount        Decimal?               @map("down_payment_amount") @db.Decimal(10, 2)
+  installmentsCount         Int                    @map("installments_count")
+  installmentManagement      InstallmentManagement @map("installment_management")
+  status                   PaymentPlanStatus       @default(active)
+  createdAt                DateTime                @default(now()) @map("created_at")
+  updatedAt                DateTime                @updatedAt @map("updated_at")
+
+  installments              Installment[]
+  adjustments               PaymentPlanAdjustment[]
+
+  @@map("payment_plans")
+}
+
+enum InstallmentStatus {
+  upcoming
+  due
+  paid
+  overdue
+  failed
+  waived
+}
+
+model Installment {
+  id                    String              @id @default(uuid())
+  paymentPlanId          String              @map("payment_plan_id")
+  paymentPlan             PaymentPlan        @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+  installmentNumber        Int                @map("installment_number")
+  amountBillingCurrency     Decimal            @map("amount_billing_currency") @db.Decimal(12, 2)
+  dueDate                  DateTime           @map("due_date") @db.Date
+  status                   InstallmentStatus  @default(upcoming)
+  paidAt                    DateTime?          @map("paid_at")
+  gracePeriodEndsAt          DateTime?          @map("grace_period_ends_at") @db.Date
+  reminderSentCount           Int               @default(0) @map("reminder_sent_count")
+  createdAt                 DateTime           @default(now()) @map("created_at")
+  updatedAt                 DateTime           @updatedAt @map("updated_at")
+
+  payments                   Payment[]
+
+  @@map("installments")
+}
+
+enum PaymentPlanAdjustmentType {
+  reschedule
+  reduce_amount
+  waive_installment
+  extend_grace
+}
+
+model PaymentPlanAdjustment {
+  id               String                    @id @default(uuid())
+  paymentPlanId     String                    @map("payment_plan_id")
+  paymentPlan        PaymentPlan              @relation(fields: [paymentPlanId], references: [id], onDelete: Cascade)
+  adjustmentType       PaymentPlanAdjustmentType @map("adjustment_type")
+  oldValue              Json?                    @map("old_value")
+  newValue               Json?                   @map("new_value")
+  reason                 String?
+  requestedBy             String                 @map("requested_by")
+  approvedBy               String                @map("approved_by")
+  createdAt                DateTime              @default(now()) @map("created_at")
+
+  @@map("payment_plan_adjustments")
+}
+
+// ---------- المدفوعات الفعلية ----------
+
+enum PaymentStatus {
+  pending
+  completed
+  failed
+  refunded
+  partially_refunded
+}
+
+enum GatewayPaymentMethod {
+  card
+  paypal_wallet
+  bnpl
+}
+
+model Payment {
+  id                          String                @id @default(uuid())
+  studentId                    String                @map("student_id")
+  student                       User                 @relation(fields: [studentId], references: [id])
+  relatedType                    PaymentPlanRelatedType @map("related_type")
+  relatedId                       String              @map("related_id")
+  installmentId                    String?            @map("installment_id")
+  installment                       Installment?       @relation(fields: [installmentId], references: [id])
+
+  amountUsd                         Decimal            @map("amount_usd") @db.Decimal(10, 2)
+  currency                          String             @default("USD")
+
+  gatewayId                          String            @map("gateway_id")
+  gateway                              PaymentGateway   @relation(fields: [gatewayId], references: [id])
+  gatewayPaymentMethod                  GatewayPaymentMethod? @map("gateway_payment_method")
+  gatewayTransactionId                   String?         @map("gateway_transaction_id")
+  gatewayFeeUsd                           Decimal?       @map("gateway_fee_usd") @db.Decimal(10, 2)
+  gatewayRawResponse                       Json?         @map("gateway_raw_response")
+
+  attemptNumber                             Int          @default(1) @map("attempt_number")
+  status                                    PaymentStatus @default(pending)
+  createdAt                                 DateTime      @default(now()) @map("created_at")
+
+  refunds                                    Refund[]
+  earning                                     InstructorEarning?
+
+  @@map("payments")
+}
+
+enum RefundStatus {
+  requested
+  approved
+  rejected
+  completed
+}
+
+model Refund {
+  id           String       @id @default(uuid())
+  paymentId    String       @map("payment_id")
+  payment      Payment      @relation(fields: [paymentId], references: [id])
+  amountUsd    Decimal      @map("amount_usd") @db.Decimal(10, 2)
+  reason       String?
+  processedBy  String?      @map("processed_by")
+  status       RefundStatus @default(requested)
+  createdAt    DateTime     @default(now()) @map("created_at")
+
+  @@map("refunds")
+}
+
+// ============================================================
+// 8) مستحقات المدربين (عمولة، أرباح، صرف بموافقة مزدوجة)
+// ============================================================
+
+model CommissionPolicy {
+  id                       String      @id @default(uuid())
+  courseLevel              CourseLevel @map("course_level")
+  instructorSharePercent    Decimal    @map("instructor_share_percent") @db.Decimal(5, 2)
+  platformSharePercent       Decimal   @map("platform_share_percent") @db.Decimal(5, 2)
+  effectiveFrom               DateTime @map("effective_from") @db.Date
+  effectiveTo                  DateTime? @map("effective_to") @db.Date
+  createdBy                    String   @map("created_by")
+
+  @@map("commission_policies")
+}
+
+model InstructorCommissionAgreement {
+  id                        String    @id @default(uuid())
+  instructorId               String   @map("instructor_id")
+  instructor                  User    @relation("InstructorAgreements", fields: [instructorId], references: [id])
+  courseId                     String? @map("course_id")
+  instructorSharePercent         Decimal @map("instructor_share_percent") @db.Decimal(5, 2)
+  reason                          String?
+  approvedBy                       String @map("approved_by")
+  effectiveFrom                     DateTime @map("effective_from") @db.Date
+  effectiveTo                        DateTime? @map("effective_to") @db.Date
+  status                             String  @default("active") // active/expired/revoked
+
+  @@map("instructor_commission_agreements")
+}
+
+enum EarningStatus {
+  pending_clearance
+  cleared
+  held
+  clawed_back
+}
+
+model InstructorEarning {
+  id                        String        @id @default(uuid())
+  instructorId               String       @map("instructor_id")
+  instructor                   User       @relation("InstructorEarnings", fields: [instructorId], references: [id])
+  paymentId                     String     @unique @map("payment_id")
+  payment                         Payment  @relation(fields: [paymentId], references: [id])
+  courseId                        String?  @map("course_id")
+  customRequestId                  String? @map("custom_request_id")
+
+  grossAmountUsd                    Decimal @map("gross_amount_usd") @db.Decimal(10, 2)
+  gatewayFeeUsd                      Decimal @map("gateway_fee_usd") @db.Decimal(10, 2)
+  netAfterGatewayUsd                  Decimal @map("net_after_gateway_usd") @db.Decimal(10, 2)
+
+  commissionPercentApplied              Decimal @map("commission_percent_applied") @db.Decimal(5, 2)
+  instructorEarningUsd                   Decimal @map("instructor_earning_usd") @db.Decimal(10, 2)
+  platformFeeUsd                          Decimal @map("platform_fee_usd") @db.Decimal(10, 2)
+
+  status                                  EarningStatus @default(pending_clearance)
+  clearanceDate                            DateTime? @map("clearance_date") @db.Date
+  payoutId                                  String?  @map("payout_id")
+  payout                                     InstructorPayout? @relation(fields: [payoutId], references: [id])
+  createdAt                                  DateTime @default(now()) @map("created_at")
+
+  @@map("instructor_earnings")
+}
+
+enum PayoutStatus {
+  calculated
+  pending_second_approval
+  approved
+  rejected
+  awaiting_manual_confirmation
+  paid
+  failed
+}
+
+enum PayoutMethod {
+  stripe_connect
+  paypal
+  manual_bank_transfer
+}
+
+model InstructorPayout {
+  id                    String        @id @default(uuid())
+  instructorId           String       @map("instructor_id")
+  instructor               User       @relation("InstructorPayouts", fields: [instructorId], references: [id])
+  periodStart               DateTime  @map("period_start") @db.Date
+  periodEnd                  DateTime @map("period_end") @db.Date
+  grossAmount                  Decimal @map("gross_amount") @db.Decimal(10, 2)
+  netAmountUsd                   Decimal @map("net_amount_usd") @db.Decimal(10, 2)
+
+  requiresDualApproval             Boolean @default(false) @map("requires_dual_approval")
+  firstApprovalById                 String? @map("first_approval_by")
+  firstApprovalBy                    User?  @relation("FirstApprover", fields: [firstApprovalById], references: [id])
+  firstApprovalAt                     DateTime? @map("first_approval_at")
+  secondApprovalById                   String? @map("second_approval_by")
+  secondApprovalBy                      User?  @relation("SecondApprover", fields: [secondApprovalById], references: [id])
+  secondApprovalAt                       DateTime? @map("second_approval_at")
+  rejectionReason                        String? @map("rejection_reason")
+
+  status                                 PayoutStatus @default(calculated)
+  payoutMethod                             PayoutMethod? @map("payout_method")
+  executionReference                        String?  @map("execution_reference")
+  proofOfTransferUrl                         String? @map("proof_of_transfer_url")
+  paidAt                                     DateTime? @map("paid_at")
+  createdAt                                  DateTime @default(now()) @map("created_at")
+
+  earnings                                   InstructorEarning[]
+  deductions                                  InstructorDeduction[]
+
+  @@map("instructor_payouts")
+}
+
+enum DeductionReason {
+  refund_after_payout
+  dispute_chargeback
+  policy_violation
+}
+
+enum DeductionStatus {
+  pending
+  deducted
+  waived
+}
+
+model InstructorDeduction {
+  id                 String          @id @default(uuid())
+  instructorId        String         @map("instructor_id")
+  earningId             String       @map("earning_id")
+  amountUsd              Decimal     @map("amount_usd") @db.Decimal(10, 2)
+  reason                  DeductionReason
+  status                   DeductionStatus @default(pending)
+  appliedToPayoutId          String?  @map("applied_to_payout_id")
+  appliedToPayout              InstructorPayout? @relation(fields: [appliedToPayoutId], references: [id])
+
+  @@map("instructor_deductions")
+}
+
+// حدود الموافقة المزدوجة - قابلة للتعديل الإداري (كما اتُّفق عليه: 500$ افتراضيًا)
+model DualApprovalThreshold {
+  id            String   @id @default(uuid())
+  minAmountUsd  Decimal  @map("min_amount_usd") @db.Decimal(10, 2)
+  requiredRoles Json     @map("required_roles") // ['finance_manager','super_admin']
+  isActive      Boolean  @default(true) @map("is_active")
+
+  @@map("dual_approval_thresholds")
+}
+
+// ============================================================
+// 9) حماية الفيديو والأمان السلوكي
+// ============================================================
+
+model VideoPlaybackSession {
+  id                 String    @id @default(uuid())
+  userId             String    @map("user_id")
+  user               User      @relation(fields: [userId], references: [id])
+  lessonId           String    @map("lesson_id")
+  lesson             Lesson    @relation(fields: [lessonId], references: [id])
+  deviceFingerprint  String    @map("device_fingerprint")
+  playbackToken      String    @unique @map("playback_token")
+  ipAddress          String?   @map("ip_address")
+  startedAt          DateTime  @default(now()) @map("started_at")
+  lastHeartbeatAt    DateTime  @default(now()) @map("last_heartbeat_at")
+  endedAt            DateTime? @map("ended_at")
+  suspiciousFlag     Boolean   @default(false) @map("suspicious_flag")
+
+  @@index([userId, lessonId])
+  @@map("video_playback_sessions")
+}
+
+enum VideoSecurityEventType {
+  devtools_opened
+  screen_recording_detected
+  multiple_tab_playback
+  rapid_seek_pattern
+  right_click_attempt
+  download_attempt_blocked
+}
+
+model VideoSecurityEvent {
+  id                 String                  @id @default(uuid())
+  userId             String                  @map("user_id")
+  user               User                    @relation(fields: [userId], references: [id])
+  lessonId           String                  @map("lesson_id")
+  eventType          VideoSecurityEventType  @map("event_type")
+  deviceFingerprint  String?                 @map("device_fingerprint")
+  metadata           Json?
+  createdAt          DateTime                @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("video_security_events")
+}
+
+// ---------- لوحة مراجعة الأمان الموحّدة (فيديو + تواصل) ----------
+
+enum SecurityCaseType {
+  multi_region_access
+  account_sharing_pattern
+  repeated_devtools_detection
+  excessive_security_events
+  contact_leak_attempt
+}
+
+enum SecurityCaseSeverity {
+  low
+  medium
+  high
+}
+
+enum SecurityCaseStatus {
+  open
+  under_review
+  dismissed
+  action_taken
+}
+
+enum SecurityCaseResolution {
+  false_positive
+  warning_sent
+  account_suspended
+  device_reset_forced
+}
+
+model SecurityReviewCase {
+  id             String                  @id @default(uuid())
+  userId         String                  @map("user_id")
+  user           User                    @relation("ReviewCaseUser", fields: [userId], references: [id])
+  caseType       SecurityCaseType        @map("case_type")
+  severity       SecurityCaseSeverity
+  relatedEvents  Json?                   @map("related_events")
+  status         SecurityCaseStatus      @default(open)
+  assignedToId   String?                 @map("assigned_to")
+  assignedTo     User?                   @relation("ReviewCaseAssignee", fields: [assignedToId], references: [id])
+  reviewerNotes  String?                 @map("reviewer_notes")
+  resolution     SecurityCaseResolution?
+  resolvedBy     String?                 @map("resolved_by")
+  resolvedAt     DateTime?               @map("resolved_at")
+  createdAt      DateTime                @default(now()) @map("created_at")
+
+  @@index([status, severity])
+  @@map("security_review_cases")
+}
+
+// ---------- الرقابة على التواصل الداخلي ----------
+
+enum MessageContextType {
+  custom_request_thread
+  course_qa
+  lesson_comment
+  support_ticket
+}
+
+enum ModerationStatus {
+  clean
+  flagged
+  blocked
+  under_review
+}
+
+model Message {
+  id                   String            @id @default(uuid())
+  threadId             String            @map("thread_id")
+  senderId             String            @map("sender_id")
+  contextType          MessageContextType @map("context_type")
+  contextId            String            @map("context_id")
+  rawContent           String            @map("raw_content")
+  sanitizedContent     String?           @map("sanitized_content")
+  moderationStatus     ModerationStatus  @default(clean) @map("moderation_status")
+  detectionLayer       String?           @map("detection_layer") // 'regex','ai_contextual','ocr'
+  detectedPatterns     Json?             @map("detected_patterns")
+  confidenceScore      Decimal?          @map("confidence_score") @db.Decimal(3, 2)
+  senderIsStaff        Boolean           @default(false) @map("sender_is_staff")
+  createdAt            DateTime          @default(now()) @map("created_at")
+
+  @@index([threadId])
+  @@index([senderId, createdAt])
+  @@map("messages")
+}
+
+enum ViolationSeverity {
+  low
+  medium
+  high
+}
+
+enum ViolationAction {
+  content_masked
+  message_blocked
+  warning_sent
+  escalated
+}
+
+model CommunicationViolation {
+  id           String            @id @default(uuid())
+  userId       String            @map("user_id")
+  messageId    String            @map("message_id")
+  violationType String           @map("violation_type")
+  severity     ViolationSeverity
+  actionTaken  ViolationAction   @map("action_taken")
+  createdAt    DateTime          @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@map("communication_violations")
+}
+
+// ============================================================
+// 10) الذكاء الاصطناعي - Gateway موحّد، حدود مرنة، توجيه متعدد النماذج
+// ============================================================
+
+enum AiUserRole {
+  student
+  instructor
+  marketing
+  staff
+}
+
+model AiInteraction {
+  id                  String     @id @default(uuid())
+  userId              String     @map("user_id")
+  user                User       @relation(fields: [userId], references: [id])
+  userRole            AiUserRole @map("user_role")
+  featureType         String     @map("feature_type") // 'lesson_qa','summarization','question_bank_gen'...
+  promptTokens        Int?       @map("prompt_tokens")
+  completionTokens    Int?       @map("completion_tokens")
+  costUsd             Decimal?   @map("cost_usd") @db.Decimal(10, 6)
+  modelUsed           String     @map("model_used")
+  status              String     @default("success") // success/failed/moderated_blocked
+  relatedResourceType String?    @map("related_resource_type")
+  relatedResourceId   String?    @map("related_resource_id")
+  createdAt           DateTime   @default(now()) @map("created_at")
+
+  @@index([userId, createdAt])
+  @@index([featureType, createdAt])
+  @@map("ai_interactions")
+}
+
+enum UsageLimitScope {
+  per_user
+  per_role_pooled
+}
+
+// حدود الاستخدام - قابلة للتعديل الكامل من لوحة الإدارة (لا أرقام ثابتة بالكود)
+model AiUsageLimit {
+  id                  String          @id @default(uuid())
+  role                AiUserRole
+  featureType         String          @map("feature_type")
+  scope               UsageLimitScope @default(per_user)
+  dailyRequestLimit   Int?            @map("daily_request_limit")
+  monthlyRequestLimit Int?            @map("monthly_request_limit")
+  monthlyTokenBudget  Int?            @map("monthly_token_budget")
+  monthlyCostCapUsd   Decimal?        @map("monthly_cost_cap_usd") @db.Decimal(10, 2)
+  isActive            Boolean         @default(true) @map("is_active")
+  updatedBy           String?         @map("updated_by")
+  updatedAt           DateTime        @updatedAt @map("updated_at")
+
+  @@unique([role, featureType])
+  @@map("ai_usage_limits")
+}
+
+model AiUsageLimitOverride {
+  id                   String    @id @default(uuid())
+  userId               String    @map("user_id")
+  featureType          String    @map("feature_type")
+  customDailyLimit     Int?      @map("custom_daily_limit")
+  customMonthlyBudget  Int?      @map("custom_monthly_budget")
+  reason               String?
+  approvedBy           String    @map("approved_by")
+  expiresAt            DateTime? @map("expires_at")
+
+  @@map("ai_usage_limit_overrides")
+}
+
+model AiUsageTracking {
+  userId         String   @map("user_id")
+  date           DateTime @db.Date
+  requestsCount  Int      @default(0) @map("requests_count")
+  tokensConsumed Int      @default(0) @map("tokens_consumed")
+
+  @@id([userId, date])
+  @@map("ai_usage_tracking")
+}
+
+// توجيه متعدد النماذج - قابل للتعديل من DB (Haiku/Sonnet/Opus حسب حساسية كل ميزة)
+model AiModelRouting {
+  id                    String   @id @default(uuid())
+  featureType           String   @unique @map("feature_type")
+  modelId                String  @map("model_id")
+  maxTokens               Int    @map("max_tokens")
+  temperature               Decimal @default(0.7) @map("temperature") @db.Decimal(2, 1)
+  requiresHumanReview        Boolean @default(false) @map("requires_human_review")
+  fallbackModelId              String? @map("fallback_model_id")
+  updatedBy                     String? @map("updated_by")
+  updatedAt                      DateTime @updatedAt @map("updated_at")
+
+  @@map("ai_model_routing")
+}
+
+model AiModerationFlag {
+  id            String   @id @default(uuid())
+  interactionId String   @map("interaction_id")
+  flagType      String   @map("flag_type")
+  severity      String   // low/medium/high
+  actionTaken   String   @map("action_taken") // blocked/logged_only/escalated
+  createdAt     DateTime @default(now()) @map("created_at")
+
+  @@map("ai_moderation_flags")
+}
+
+enum QuestionType {
+  mcq
+  true_false
+  short_answer
+  essay
+}
+
+enum QuestionDifficulty {
+  easy
+  medium
+  hard
+}
+
+enum QuestionBankStatus {
+  draft
+  approved
+  rejected
+}
+
+// بنك الأسئلة - أي سؤال مُولَّد بالذكاء الاصطناعي يدخل بحالة draft إلزاميًا
+// ولا يظهر للطلاب حتى موافقة المدرب الصريحة (reviewedByInstructor=true, status='approved')
+model QuestionBankItem {
+  id                    String              @id @default(uuid())
+  lessonId              String              @map("lesson_id")
+  questionType          QuestionType        @map("question_type")
+  questionText          String              @map("question_text")
+  options               Json?
+  correctAnswer         String              @map("correct_answer")
+  difficulty            QuestionDifficulty
+  generatedBy           String              @default("manual") @map("generated_by") // 'ai' | 'manual'
+  reviewedByInstructor  Boolean             @default(false) @map("reviewed_by_instructor")
+  status                QuestionBankStatus  @default(draft)
+  locale                Locale
+  createdAt             DateTime            @default(now()) @map("created_at")
+
+  @@map("question_bank")
+}
+
+// فهرسة محتوى الدورات للـ RAG (يتطلب pgvector extension - راجع production-notes.md)
+model CourseContentEmbedding {
+  id         String @id @default(uuid())
+  lessonId   String @map("lesson_id")
+  chunkText  String @map("chunk_text")
+  // ملاحظة: عمود embedding الفعلي (vector) يُضاف عبر migration خام بعد تفعيل pgvector -
+  // Prisma لا يدعم النوع Vector أصلًا، راجع production-notes.md لخطوات التفعيل.
+  locale     Locale
+  chunkOrder Int    @map("chunk_order")
+  createdAt  DateTime @default(now()) @map("created_at")
+
+  @@map("course_content_embeddings")
+}
+
+// ============================================================
+// 11) التقارير - محرك موحّد بصلاحيات مقيَّدة واستعلامات Whitelisted
+// ============================================================
+
+enum ReportCategory {
+  academic
+  administrative
+  financial
+}
+
+model ReportDefinition {
+  id                     String         @id @default(uuid())
+  reportKey              String         @unique @map("report_key")
+  category               ReportCategory
+  applicableRoles        Json           @map("applicable_roles") // ['student','instructor',...]
+  dataSourceQuery        String         @map("data_source_query") // مرجع لاستعلام مُعرَّف بالكود، وليس SQL حر
+  supportsExportFormats  Json           @map("supports_export_formats")
+  supportsScheduling     Boolean        @default(false) @map("supports_scheduling")
+  isActive               Boolean        @default(true) @map("is_active")
+
+  @@map("report_definitions")
+}
+
+enum ReportScope {
+  self
+  managed_students
+  managed_courses
+  all
+}
+
+enum GeneratedReportStatus {
+  generating
+  ready
+  failed
+}
+
+model GeneratedReport {
+  id            String                 @id @default(uuid())
+  reportKey     String                 @map("report_key")
+  requestedById String                 @map("requested_by")
+  requestedBy   User                   @relation(fields: [requestedById], references: [id])
+  filters       Json?
+  scope         ReportScope
+  fileUrl       String?                @map("file_url")
+  status        GeneratedReportStatus  @default(generating)
+  generatedAt   DateTime               @default(now()) @map("generated_at")
+  expiresAt     DateTime?              @map("expires_at")
+
+  @@map("generated_reports")
+}
+
+enum ScheduleFrequency {
+  daily
+  weekly
+  monthly
+}
+
+enum DeliveryChannel {
+  email
+  in_app
+}
+
+model ReportSchedule {
+  id               String            @id @default(uuid())
+  reportKey        String            @map("report_key")
+  userId           String            @map("user_id")
+  user             User              @relation(fields: [userId], references: [id])
+  frequency        ScheduleFrequency
+  deliveryChannel  DeliveryChannel   @map("delivery_channel")
+  filters          Json?
+  isActive         Boolean           @default(true) @map("is_active")
+
+  @@map("report_schedules")
+}

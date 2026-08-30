@@ -1,0 +1,11 @@
+{
+  "Home": {
+    "title": "Propesyonal na Platform sa Pag-aaral",
+    "subtitle": "Matuto nang walang hangganan - Unibersidad, propesyonal, paghahanda, at custom na kurso"
+  },
+  "Auth": {
+    "oauthCallbackProcessing": "Kinukumpleto ang pag-sign in...",
+    "oauthCallbackError": "Hindi makumpleto ang pag-sign in",
+    "oauthCallbackErrorHint": "May naganap na error habang nagpapatunay gamit ang panlabas na account. Subukan muli o gumamit ng email at password."
+  }
+}

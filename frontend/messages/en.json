@@ -1,0 +1,11 @@
+{
+  "Home": {
+    "title": "Professional Learning Platform",
+    "subtitle": "Learn without limits - University, professional, prep, and custom courses"
+  },
+  "Auth": {
+    "oauthCallbackProcessing": "Completing sign-in...",
+    "oauthCallbackError": "Sign-in could not be completed",
+    "oauthCallbackErrorHint": "Something went wrong authenticating with the external account. Try again or use email and password."
+  }
+}
