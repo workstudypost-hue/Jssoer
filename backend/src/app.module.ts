@@ -30,12 +30,24 @@ import { SchedulerModule } from './modules/scheduler/scheduler.module';
     ]),
 
     // اتصال Redis موحّد لكل طوابير BullMQ (Cron الفعلي لتحصيل الأقساط، أسعار الصرف، المستحقات)
+    // يدعم صيغتين: REDIS_URL كرابط واحد (Railway/Render/Heroku وأغلب مزودي PaaS)،
+    // أو REDIS_HOST/REDIS_PORT/REDIS_PASSWORD منفصلة (محليًا عبر docker-compose).
     BullModule.forRoot({
-      connection: {
-        host: process.env.REDIS_HOST ?? 'localhost',
-        port: Number(process.env.REDIS_PORT ?? 6379),
-        password: process.env.REDIS_PASSWORD || undefined,
-      },
+      connection: process.env.REDIS_URL
+        ? (() => {
+            const u = new URL(process.env.REDIS_URL as string);
+            return {
+              host: u.hostname,
+              port: Number(u.port || 6379),
+              password: u.password || undefined,
+              tls: u.protocol === 'rediss:' ? {} : undefined,
+            };
+          })()
+        : {
+            host: process.env.REDIS_HOST ?? 'localhost',
+            port: Number(process.env.REDIS_PORT ?? 6379),
+            password: process.env.REDIS_PASSWORD || undefined,
+          },
     }),
 
     PrismaModule,
