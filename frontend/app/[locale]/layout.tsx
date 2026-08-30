@@ -1,5 +1,5 @@
 import { NextIntlClientProvider } from 'next-intl';
-import { getMessages } from 'next-intl/server';
+import { getMessages, setRequestLocale } from 'next-intl/server';
 import { locales, rtlLocales, type AppLocale } from '../../i18n';
 import '../globals.css';
 
@@ -14,6 +14,11 @@ export default async function LocaleLayout({
   children: React.ReactNode;
   params: { locale: AppLocale };
 }) {
+  // يُفعّل الـ Static Rendering لكل الصفحات تحت هذا الـ Layout بدل الوقوع بالخطأ
+  // إلى Dynamic Rendering (next-intl يقرأ headers() داخليًا لتحديد اللغة ما لم
+  // نُخبره صراحةً بالـ locale الحالي عبر هذا الاستدعاء - يجب أن يُستدعى أولًا).
+  setRequestLocale(locale);
+
   const messages = await getMessages();
   const direction = rtlLocales.includes(locale) ? 'rtl' : 'ltr';
 

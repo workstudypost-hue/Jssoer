@@ -10,10 +10,12 @@ export const defaultLocale: AppLocale = 'ar';
 
 export const rtlLocales: AppLocale[] = ['ar'];
 
-export default getRequestConfig(async ({ locale }) => {
-  if (!locales.includes(locale as AppLocale)) notFound();
+export default getRequestConfig(async ({ requestLocale }) => {
+  let locale = await requestLocale;
+  if (!locale || !locales.includes(locale as AppLocale)) notFound();
 
   return {
-    messages: (await import(`../messages/${locale}.json`)).default,
+    locale,
+    messages: (await import(`./messages/${locale}.json`)).default,
   };
 });

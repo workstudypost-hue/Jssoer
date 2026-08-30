@@ -9,7 +9,7 @@ generator client {
   // الثنائي (native binary) من binaries.prisma.sh عند `prisma generate`/`npm install` -
   // هذا التحميل يفشل بكثرة خلف جدران حماية مؤسسية أو شبكات مقيَّدة، ويوقف البناء
   // بالكامل رغم أن كل الكود سليم. الاتصال هنا يتم عبر حزمة `pg` القياسية مباشرة.
-  previewFeatures = ["driverAdapters"]
+  previewFeatures = ["queryCompiler", "driverAdapters"]
 }
 
 datasource db {

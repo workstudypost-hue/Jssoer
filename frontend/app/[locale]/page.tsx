@@ -1,6 +1,9 @@
 import { useTranslations } from 'next-intl';
+import { setRequestLocale } from 'next-intl/server';
+import type { AppLocale } from '../../i18n';
 
-export default function HomePage() {
+export default function HomePage({ params: { locale } }: { params: { locale: AppLocale } }) {
+  setRequestLocale(locale);
   const t = useTranslations('Home');
 
   return (
