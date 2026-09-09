@@ -555,6 +555,7 @@ model PaymentGateway {
   maxAmount           Decimal?        @map("max_amount") @db.Decimal(10, 2)
 
   payments            Payment[]
+  savedPaymentMethods SavedPaymentMethod[]
 
   @@map("payment_gateways")
 }
@@ -564,6 +565,7 @@ model SavedPaymentMethod {
   studentId                String         @map("student_id")
   student                  User           @relation(fields: [studentId], references: [id])
   gatewayId                String         @map("gateway_id")
+  gateway                  PaymentGateway @relation(fields: [gatewayId], references: [id])
   gatewayCustomerId        String         @map("gateway_customer_id")
   gatewayPaymentMethodId   String         @map("gateway_payment_method_id")
   cardLast4                String?        @map("card_last4")
