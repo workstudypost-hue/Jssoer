@@ -16,7 +16,7 @@ export interface TransitionActor {
  */
 const TRANSITION_NOTIFICATION_MESSAGES: Partial<Record<CustomRequestStatus, string>> = {
   submitted: 'تم استلام طلبك الخاص وهو الآن قيد المراجعة من فريقنا.',
-  price_proposed: 'تم تحديد سعر مقترح لطلبك الخاص - يُرجى مراجعته والموافقة عليه.',
+  priced: 'تم تحديد سعر مقترح لطلبك الخاص - يُرجى مراجعته والموافقة عليه.',
   awaiting_payment: 'وافق المدرب على السعر - أكمل الدفع الآن لبدء العمل على طلبك.',
   approved: 'تم تأكيد الدفع بنجاح، طلبك الخاص الآن قيد التنفيذ.',
   in_production: 'بدأ المدرب العمل فعليًا على طلبك الخاص.',
