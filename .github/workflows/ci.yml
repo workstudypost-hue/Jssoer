@@ -1,0 +1,128 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  backend:
+    name: Backend (build + prisma + tests)
+    runs-on: ubuntu-latest
+
+    # خدمات مؤقتة لمدة تشغيل الـ job فقط - تحاكي الإنتاج (Supabase Postgres + Upstash Redis)
+    services:
+      postgres:
+        image: pgvector/pgvector:pg16
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgres
+          POSTGRES_DB: edu_platform_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U postgres"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+      redis:
+        image: redis:7-alpine
+        ports:
+          - 6379:6379
+        options: >-
+          --health-cmd "redis-cli ping"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 10
+
+    env:
+      NODE_ENV: test
+      DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edu_platform_ci?schema=public
+      REDIS_HOST: localhost
+      REDIS_PORT: 6379
+      REDIS_PASSWORD: ''
+      JWT_ACCESS_SECRET: ci-only-access-secret-not-for-production-min32
+      JWT_ACCESS_EXPIRES_IN: 15m
+      JWT_REFRESH_SECRET: ci-only-refresh-secret-not-for-production-min32
+      JWT_REFRESH_EXPIRES_IN: 7d
+      JWT_REFRESH_EXPIRES_DAYS: '7'
+      MAX_ACTIVE_DEVICES_PER_USER: '1'
+      OTP_EXPIRY_MINUTES: '10'
+      OTP_MAX_ATTEMPTS: '5'
+      APP_URL: http://localhost:4000
+      FRONTEND_URL: http://localhost:3000
+      PORT: '4000'
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --include=dev
+
+      - name: Enable pgvector extension
+        run: |
+          PGPASSWORD=postgres psql -h localhost -U postgres -d edu_platform_ci -c "CREATE EXTENSION IF NOT EXISTS vector;"
+
+      - name: Prisma generate
+        run: npx prisma generate
+
+      - name: Prisma validate
+        run: npx prisma validate
+
+      - name: Prisma migrate deploy (against CI database)
+        run: npx prisma migrate deploy
+
+      - name: Type-check & build (nest build)
+        run: npm run build
+
+      - name: Lint
+        run: npm run lint -- --max-warnings=0
+        continue-on-error: true
+
+      - name: Run tests
+        run: npm test -- --ci --passWithNoTests
+
+  frontend:
+    name: Frontend (build)
+    runs-on: ubuntu-latest
+
+    defaults:
+      run:
+        working-directory: frontend
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: frontend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --include=dev
+
+      - name: Build (next build)
+        run: npm run build
+        env:
+          NEXT_PUBLIC_API_URL: http://localhost:4000
