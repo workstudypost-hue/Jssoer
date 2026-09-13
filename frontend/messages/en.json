@@ -60,9 +60,12 @@
       "expiryNote": "The code is valid for 10 minutes",
       "submit": "Verify",
       "submitting": "Verifying...",
-      "noCodeNote": "Didn't get a code? Check your inbox in a couple of minutes, or contact support.",
+      "noCodeNote": "Didn't get a code?",
       "missingIdentifier": "We couldn't find your registration details, please try again",
-      "backToRegister": "Back to sign up"
+      "backToRegister": "Back to sign up",
+      "resendButton": "Resend code",
+      "resendCooldown": "You can try again in {seconds}s",
+      "resendSuccess": "A new verification code was sent"
     },
     "validation": {
       "passwordTooShort": "Password must be at least 8 characters"

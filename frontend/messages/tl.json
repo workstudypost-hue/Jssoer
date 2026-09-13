@@ -60,9 +60,12 @@
       "expiryNote": "Valid ang code sa loob ng 10 minuto",
       "submit": "I-verify",
       "submitting": "Vine-verify...",
-      "noCodeNote": "Hindi nakatanggap ng code? Tingnan ang iyong inbox pagkalipas ng ilang minuto, o makipag-ugnayan sa support.",
+      "noCodeNote": "Hindi nakatanggap ng code?",
       "missingIdentifier": "Hindi mahanap ang detalye ng iyong rehistrasyon, subukan muli",
-      "backToRegister": "Bumalik sa pagpaparehistro"
+      "backToRegister": "Bumalik sa pagpaparehistro",
+      "resendButton": "Ipadala ulit ang code",
+      "resendCooldown": "Maaari kang subukan ulit pagkalipas ng {seconds}s",
+      "resendSuccess": "Naipadala na ang bagong verification code"
     },
     "validation": {
       "passwordTooShort": "Dapat hindi bababa sa 8 karakter ang password"

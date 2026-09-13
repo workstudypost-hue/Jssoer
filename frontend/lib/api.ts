@@ -126,6 +126,12 @@ export const authApi = {
       body: JSON.stringify({ refreshToken }),
     }),
 
+  resendOtp: (identifier: string) =>
+    request<{ message: string; identifier: string }>('/auth/public/resend-otp', {
+      method: 'POST',
+      body: JSON.stringify({ identifier }),
+    }),
+
   logout: (refreshToken: string, sessionToken?: string) =>
     request<void>('/auth/public/logout', {
       method: 'POST',

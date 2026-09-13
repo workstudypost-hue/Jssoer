@@ -60,9 +60,12 @@
       "expiryNote": "الرمز صالح لمدة 10 دقائق",
       "submit": "تأكيد",
       "submitting": "جارٍ التحقق...",
-      "noCodeNote": "لم يصلك الرمز؟ تحقّق من بريدك خلال دقيقتين، أو تواصل مع الدعم.",
+      "noCodeNote": "لم يصلك الرمز؟",
       "missingIdentifier": "لم يتم العثور على بيانات التسجيل، يُرجى المحاولة من جديد",
-      "backToRegister": "العودة لإنشاء الحساب"
+      "backToRegister": "العودة لإنشاء الحساب",
+      "resendButton": "إعادة إرسال الرمز",
+      "resendCooldown": "يمكنك إعادة المحاولة بعد {seconds} ثانية",
+      "resendSuccess": "تم إرسال رمز تحقق جديد"
     },
     "validation": {
       "passwordTooShort": "كلمة المرور يجب ألا تقل عن 8 أحرف"

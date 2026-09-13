@@ -14,6 +14,7 @@ import { RegisterDto } from '../dto/register.dto';
 import { VerifyOtpDto } from '../dto/verify-otp.dto';
 import { LoginDto } from '../dto/login.dto';
 import { RefreshTokenDto } from '../dto/refresh-token.dto';
+import { ResendOtpDto } from '../dto/resend-otp.dto';
 import { GoogleOAuthGuard } from '../guards/google-oauth.guard';
 import { MicrosoftOAuthGuard } from '../guards/microsoft-oauth.guard';
 import { OAuthProfile } from '../strategies/google-oauth.strategy';
@@ -41,6 +42,16 @@ export class PublicAuthController {
       ip,
       req.headers['user-agent'],
     );
+  }
+
+  /**
+   * إعادة إرسال رمز OTP لحساب لم يكمل التحقق بعد. الحد الأقصى للطلبات
+   * (3 كل 10 دقائق لكل identifier) مُنفَّذ داخل OtpService.generateAndSend
+   * ويُطبَّق تلقائيًا هنا أيضًا لأن كلا المسارين يستدعيان نفس الدالة.
+   */
+  @Post('resend-otp')
+  resendOtp(@Body() dto: ResendOtpDto) {
+    return this.publicAuthService.resendRegistrationOtp(dto.identifier);
   }
 
   @Post('login')

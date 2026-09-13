@@ -1,6 +1,6 @@
 'use client';
 
-import { Suspense, useState, type FormEvent } from 'react';
+import { Suspense, useEffect, useState, type FormEvent } from 'react';
 import { useTranslations } from 'next-intl';
 import { useSearchParams } from 'next/navigation';
 import { Link, useRouter } from '../../../../lib/i18n-navigation';
@@ -30,6 +30,32 @@ function VerifyOtpForm() {
   const [code, setCode] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const [resendCooldown, setResendCooldown] = useState(0);
+  const [resendLoading, setResendLoading] = useState(false);
+  const [resendMessage, setResendMessage] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (resendCooldown <= 0) return;
+    const timer = setInterval(() => setResendCooldown((seconds) => Math.max(0, seconds - 1)), 1000);
+    return () => clearInterval(timer);
+  }, [resendCooldown]);
+
+  async function handleResend() {
+    if (!identifier || resendCooldown > 0) return;
+    setResendMessage(null);
+    setResendLoading(true);
+    try {
+      await authApi.resendOtp(identifier);
+      setResendMessage(t('verifyOtp.resendSuccess'));
+      // 60 ثانية تهدئة على الواجهة - وقاية إضافية للتجربة، والحد الفعلي (3 كل
+      // 10 دقائق) مُنفَّذ على الخادم بغض النظر عن هذا التبريد المحلي.
+      setResendCooldown(60);
+    } catch (err) {
+      setResendMessage(err instanceof ApiError ? err.message : t('genericError'));
+    } finally {
+      setResendLoading(false);
+    }
+  }
 
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
@@ -95,7 +121,19 @@ function VerifyOtpForm() {
         </SubmitButton>
       </form>
 
-      <p className="mt-6 text-center text-sm text-slate-500">{t('verifyOtp.noCodeNote')}</p>
+      <p className="mt-6 text-center text-sm text-slate-500">
+        {resendMessage ?? t('verifyOtp.noCodeNote')}
+      </p>
+      <button
+        type="button"
+        onClick={handleResend}
+        disabled={resendLoading || resendCooldown > 0}
+        className="mx-auto mt-2 block text-sm font-semibold text-navy-900 hover:underline disabled:cursor-not-allowed disabled:text-slate-400 disabled:no-underline"
+      >
+        {resendCooldown > 0
+          ? t('verifyOtp.resendCooldown', { seconds: resendCooldown })
+          : t('verifyOtp.resendButton')}
+      </button>
     </AuthShell>
   );
 }

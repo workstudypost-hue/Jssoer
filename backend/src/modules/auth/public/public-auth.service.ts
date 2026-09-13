@@ -69,6 +69,30 @@ export class PublicAuthService {
   }
 
   /**
+   * إعادة إرسال رمز OTP لحساب لم يُكمل التحقق بعد (لم يستلم الرمز الأول، أو انتهت صلاحيته).
+   * يعيد استخدام نفس منطق Rate limiting الموجود في OtpService (3 طلبات كل 10 دقائق
+   * لكل identifier) دون الحاجة لأي حد إضافي هنا.
+   */
+  async resendRegistrationOtp(identifier: string) {
+    const user = await this.prisma.user.findFirst({
+      where: { OR: [{ email: identifier }, { phone: identifier }] },
+    });
+
+    // رسالة عامة تتفادى تأكيد/نفي وجود الحساب لمعرّف لا ينتمي لتسجيل معلّق -
+    // نفس مستوى الحذر المتّبع في verifyRegistrationOtp أعلاه.
+    if (!user || user.status !== 'pending_verification') {
+      throw new BadRequestException(
+        'لا يوجد تسجيل معلَّق بهذا المعرّف. إذا كان حسابك مفعَّلًا بالفعل، يمكنك تسجيل الدخول مباشرة.',
+      );
+    }
+
+    const channel: OtpChannel = identifier === user.email ? 'email' : 'sms';
+    await this.otpService.generateAndSend(identifier, channel, 'registration', user.id);
+
+    return { message: 'تم إرسال رمز تحقق جديد', identifier };
+  }
+
+  /**
    * الخطوة 2: تأكيد OTP → تفعيل الحساب وإصدار الجلسة.
    */
   async verifyRegistrationOtp(
