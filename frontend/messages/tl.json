@@ -6,6 +6,66 @@
   "Auth": {
     "oauthCallbackProcessing": "Kinukumpleto ang pag-sign in...",
     "oauthCallbackError": "Hindi makumpleto ang pag-sign in",
-    "oauthCallbackErrorHint": "May naganap na error habang nagpapatunay gamit ang panlabas na account. Subukan muli o gumamit ng email at password."
+    "oauthCallbackErrorHint": "May naganap na error habang nagpapatunay gamit ang external na account. Subukan muli o gamitin ang email at password.",
+    "genericError": "May naganap na hindi inaasahang error, subukan muli",
+    "panel": {
+      "title": "Matuto nang walang hangganan",
+      "subtitle": "Unibersidad, propesyonal, paghahanda, at custom na kurso — sa iisang lugar."
+    },
+    "common": {
+      "orDivider": "o kaya"
+    },
+    "oauth": {
+      "continueWithGoogle": "Magpatuloy gamit ang Google",
+      "continueWithMicrosoft": "Magpatuloy gamit ang Microsoft"
+    },
+    "login": {
+      "heading": "Mag-sign in",
+      "subheading": "Ilagay ang iyong detalye para magpatuloy sa iyong account",
+      "identifierLabel": "Email o numero ng telepono",
+      "identifierPlaceholder": "pangalan@halimbawa.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Mag-sign in",
+      "submitting": "Nagsa-sign in...",
+      "noAccount": "Wala ka pang account?",
+      "createAccount": "Gumawa ng bagong account"
+    },
+    "register": {
+      "heading": "Gumawa ng account",
+      "subheading": "Sumali bilang estudyante o guro at simulan ang iyong paglalakbay sa pag-aaral",
+      "roleLabel": "Gawin ang iyong account bilang",
+      "roleStudent": "Estudyante",
+      "roleInstructor": "Guro",
+      "contactMethodLabel": "Paraan ng pakikipag-ugnayan",
+      "methodEmail": "Email",
+      "methodPhone": "Numero ng telepono",
+      "emailLabel": "Email",
+      "emailPlaceholder": "pangalan@halimbawa.com",
+      "phoneLabel": "Numero ng telepono",
+      "phonePlaceholder": "+9627XXXXXXXX",
+      "passwordLabel": "Password",
+      "passwordHint": "Hindi bababa sa 8 karakter",
+      "confirmPasswordLabel": "Kumpirmahin ang password",
+      "passwordMismatch": "Hindi magkatugma ang mga password",
+      "submit": "Magpatuloy",
+      "submitting": "Ginagawa ang account...",
+      "haveAccount": "May account ka na ba?",
+      "signIn": "Mag-sign in"
+    },
+    "verifyOtp": {
+      "heading": "I-verify ang iyong code",
+      "subheading": "Nagpadala kami ng 6-digit na code sa {identifier}",
+      "codeLabel": "Verification code",
+      "expiryNote": "Valid ang code sa loob ng 10 minuto",
+      "submit": "I-verify",
+      "submitting": "Vine-verify...",
+      "noCodeNote": "Hindi nakatanggap ng code? Tingnan ang iyong inbox pagkalipas ng ilang minuto, o makipag-ugnayan sa support.",
+      "missingIdentifier": "Hindi mahanap ang detalye ng iyong rehistrasyon, subukan muli",
+      "backToRegister": "Bumalik sa pagpaparehistro"
+    },
+    "validation": {
+      "passwordTooShort": "Dapat hindi bababa sa 8 karakter ang password"
+    }
   }
 }

@@ -1,8 +1,9 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useRouter } from 'next/navigation';
 import { useTranslations } from 'next-intl';
+import { useRouter } from '../../../../lib/i18n-navigation';
+import { setTokens } from '../../../../lib/api';
 
 /**
  * تستقبل هذه الصفحة access_token/refresh_token من URL Fragment (وليس Query String)
@@ -33,8 +34,7 @@ export default function OAuthCallbackPage() {
     // تخزين التوكنات - في تطبيق إنتاجي فعلي يُفضَّل الاعتماد على Cookie httpOnly
     // مُعيَّن من الخادم مباشرة بدل localStorage (أكثر أمانًا ضد XSS)؛ هنا نستخدم
     // localStorage تبسيطًا للتوافق مع بقية عميل الـ API الحالي في هذا الـ Scaffold.
-    localStorage.setItem('ws_access_token', accessToken);
-    localStorage.setItem('ws_refresh_token', refreshToken);
+    setTokens(accessToken, refreshToken);
 
     // تنظيف الـ Fragment من شريط العنوان فورًا (لا يبقى التوكن ظاهرًا في السجل/الـ History)
     window.history.replaceState(null, '', window.location.pathname);

@@ -6,6 +6,66 @@
   "Auth": {
     "oauthCallbackProcessing": "جارٍ إكمال تسجيل الدخول...",
     "oauthCallbackError": "تعذَّر إكمال تسجيل الدخول",
-    "oauthCallbackErrorHint": "حدث خطأ أثناء المصادقة عبر الحساب الخارجي. حاول مجددًا أو استخدم البريد وكلمة المرور."
+    "oauthCallbackErrorHint": "حدث خطأ أثناء المصادقة عبر الحساب الخارجي. حاول مجددًا أو استخدم البريد وكلمة المرور.",
+    "genericError": "حدث خطأ غير متوقع، حاول مجددًا",
+    "panel": {
+      "title": "تعلّم بلا حدود",
+      "subtitle": "جامعي، مهني، تحضيري، ودورات مخصصة — في مكان واحد."
+    },
+    "common": {
+      "orDivider": "أو"
+    },
+    "oauth": {
+      "continueWithGoogle": "المتابعة عبر Google",
+      "continueWithMicrosoft": "المتابعة عبر Microsoft"
+    },
+    "login": {
+      "heading": "تسجيل الدخول",
+      "subheading": "أدخل بياناتك للمتابعة إلى حسابك",
+      "identifierLabel": "البريد الإلكتروني أو رقم الهاتف",
+      "identifierPlaceholder": "name@example.com",
+      "passwordLabel": "كلمة المرور",
+      "passwordPlaceholder": "••••••••",
+      "submit": "تسجيل الدخول",
+      "submitting": "جارٍ تسجيل الدخول...",
+      "noAccount": "ليس لديك حساب؟",
+      "createAccount": "إنشاء حساب جديد"
+    },
+    "register": {
+      "heading": "إنشاء حساب جديد",
+      "subheading": "انضم كطالب أو كمدرّب وابدأ رحلتك التعليمية",
+      "roleLabel": "أنشئ حسابك كـ",
+      "roleStudent": "طالب",
+      "roleInstructor": "مدرّب",
+      "contactMethodLabel": "طريقة التواصل",
+      "methodEmail": "البريد الإلكتروني",
+      "methodPhone": "رقم الهاتف",
+      "emailLabel": "البريد الإلكتروني",
+      "emailPlaceholder": "name@example.com",
+      "phoneLabel": "رقم الهاتف",
+      "phonePlaceholder": "+9627XXXXXXXX",
+      "passwordLabel": "كلمة المرور",
+      "passwordHint": "8 أحرف على الأقل",
+      "confirmPasswordLabel": "تأكيد كلمة المرور",
+      "passwordMismatch": "كلمتا المرور غير متطابقتين",
+      "submit": "متابعة",
+      "submitting": "جارٍ الإنشاء...",
+      "haveAccount": "لديك حساب بالفعل؟",
+      "signIn": "تسجيل الدخول"
+    },
+    "verifyOtp": {
+      "heading": "تأكيد رمز التحقق",
+      "subheading": "أرسلنا رمزًا مكوّنًا من 6 أرقام إلى {identifier}",
+      "codeLabel": "رمز التحقق",
+      "expiryNote": "الرمز صالح لمدة 10 دقائق",
+      "submit": "تأكيد",
+      "submitting": "جارٍ التحقق...",
+      "noCodeNote": "لم يصلك الرمز؟ تحقّق من بريدك خلال دقيقتين، أو تواصل مع الدعم.",
+      "missingIdentifier": "لم يتم العثور على بيانات التسجيل، يُرجى المحاولة من جديد",
+      "backToRegister": "العودة لإنشاء الحساب"
+    },
+    "validation": {
+      "passwordTooShort": "كلمة المرور يجب ألا تقل عن 8 أحرف"
+    }
   }
 }

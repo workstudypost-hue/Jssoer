@@ -4,8 +4,68 @@
     "subtitle": "Apprenez sans limites - Universitaire, professionnel, préparatoire et cours personnalisés"
   },
   "Auth": {
-    "oauthCallbackProcessing": "Finalisation de la connexion...",
+    "oauthCallbackProcessing": "Connexion en cours...",
     "oauthCallbackError": "Impossible de terminer la connexion",
-    "oauthCallbackErrorHint": "Une erreur s'est produite lors de l'authentification avec le compte externe. Réessayez ou utilisez l'e-mail et le mot de passe."
+    "oauthCallbackErrorHint": "Une erreur est survenue lors de l'authentification avec le compte externe. Réessayez ou utilisez votre e-mail et mot de passe.",
+    "genericError": "Une erreur est survenue, veuillez réessayer",
+    "panel": {
+      "title": "Apprenez sans limites",
+      "subtitle": "Universitaire, professionnel, préparatoire et cours personnalisés — au même endroit."
+    },
+    "common": {
+      "orDivider": "ou"
+    },
+    "oauth": {
+      "continueWithGoogle": "Continuer avec Google",
+      "continueWithMicrosoft": "Continuer avec Microsoft"
+    },
+    "login": {
+      "heading": "Connexion",
+      "subheading": "Entrez vos informations pour accéder à votre compte",
+      "identifierLabel": "E-mail ou numéro de téléphone",
+      "identifierPlaceholder": "nom@exemple.com",
+      "passwordLabel": "Mot de passe",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Se connecter",
+      "submitting": "Connexion en cours...",
+      "noAccount": "Vous n'avez pas de compte ?",
+      "createAccount": "Créer un compte"
+    },
+    "register": {
+      "heading": "Créer votre compte",
+      "subheading": "Rejoignez en tant qu'étudiant ou formateur et démarrez votre parcours",
+      "roleLabel": "Créer votre compte en tant que",
+      "roleStudent": "Étudiant",
+      "roleInstructor": "Formateur",
+      "contactMethodLabel": "Méthode de contact",
+      "methodEmail": "E-mail",
+      "methodPhone": "Numéro de téléphone",
+      "emailLabel": "E-mail",
+      "emailPlaceholder": "nom@exemple.com",
+      "phoneLabel": "Numéro de téléphone",
+      "phonePlaceholder": "+9627XXXXXXXX",
+      "passwordLabel": "Mot de passe",
+      "passwordHint": "8 caractères minimum",
+      "confirmPasswordLabel": "Confirmer le mot de passe",
+      "passwordMismatch": "Les mots de passe ne correspondent pas",
+      "submit": "Continuer",
+      "submitting": "Création en cours...",
+      "haveAccount": "Vous avez déjà un compte ?",
+      "signIn": "Se connecter"
+    },
+    "verifyOtp": {
+      "heading": "Vérifiez votre code",
+      "subheading": "Nous avons envoyé un code à 6 chiffres à {identifier}",
+      "codeLabel": "Code de vérification",
+      "expiryNote": "Le code est valable 10 minutes",
+      "submit": "Vérifier",
+      "submitting": "Vérification en cours...",
+      "noCodeNote": "Vous n'avez pas reçu de code ? Vérifiez votre boîte de réception dans quelques minutes, ou contactez le support.",
+      "missingIdentifier": "Impossible de retrouver vos informations d'inscription, veuillez réessayer",
+      "backToRegister": "Retour à l'inscription"
+    },
+    "validation": {
+      "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères"
+    }
   }
 }

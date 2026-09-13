@@ -5,7 +5,67 @@
   },
   "Auth": {
     "oauthCallbackProcessing": "Completing sign-in...",
-    "oauthCallbackError": "Sign-in could not be completed",
-    "oauthCallbackErrorHint": "Something went wrong authenticating with the external account. Try again or use email and password."
+    "oauthCallbackError": "Couldn't complete sign-in",
+    "oauthCallbackErrorHint": "Something went wrong authenticating with the external account. Try again or use your email and password.",
+    "genericError": "Something went wrong, please try again",
+    "panel": {
+      "title": "Learn without limits",
+      "subtitle": "University, professional, prep, and custom courses — all in one place."
+    },
+    "common": {
+      "orDivider": "or"
+    },
+    "oauth": {
+      "continueWithGoogle": "Continue with Google",
+      "continueWithMicrosoft": "Continue with Microsoft"
+    },
+    "login": {
+      "heading": "Sign in",
+      "subheading": "Enter your details to continue to your account",
+      "identifierLabel": "Email or phone number",
+      "identifierPlaceholder": "name@example.com",
+      "passwordLabel": "Password",
+      "passwordPlaceholder": "••••••••",
+      "submit": "Sign in",
+      "submitting": "Signing in...",
+      "noAccount": "Don't have an account?",
+      "createAccount": "Create a new account"
+    },
+    "register": {
+      "heading": "Create your account",
+      "subheading": "Join as a student or instructor and start your learning journey",
+      "roleLabel": "Create your account as",
+      "roleStudent": "Student",
+      "roleInstructor": "Instructor",
+      "contactMethodLabel": "Contact method",
+      "methodEmail": "Email",
+      "methodPhone": "Phone number",
+      "emailLabel": "Email",
+      "emailPlaceholder": "name@example.com",
+      "phoneLabel": "Phone number",
+      "phonePlaceholder": "+9627XXXXXXXX",
+      "passwordLabel": "Password",
+      "passwordHint": "At least 8 characters",
+      "confirmPasswordLabel": "Confirm password",
+      "passwordMismatch": "Passwords don't match",
+      "submit": "Continue",
+      "submitting": "Creating account...",
+      "haveAccount": "Already have an account?",
+      "signIn": "Sign in"
+    },
+    "verifyOtp": {
+      "heading": "Verify your code",
+      "subheading": "We sent a 6-digit code to {identifier}",
+      "codeLabel": "Verification code",
+      "expiryNote": "The code is valid for 10 minutes",
+      "submit": "Verify",
+      "submitting": "Verifying...",
+      "noCodeNote": "Didn't get a code? Check your inbox in a couple of minutes, or contact support.",
+      "missingIdentifier": "We couldn't find your registration details, please try again",
+      "backToRegister": "Back to sign up"
+    },
+    "validation": {
+      "passwordTooShort": "Password must be at least 8 characters"
+    }
   }
 }
