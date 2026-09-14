@@ -1,0 +1,48 @@
+name: Generate Initial Migration (one-off)
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  generate:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: backend
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: 'npm'
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install dependencies
+        run: npm install --include=dev
+
+      - name: Generate baseline migration SQL from current schema
+        # يولّد SQL من "لا شيء" إلى الـ schema الحالي بالكامل - لا يحتاج اتصال
+        # بقاعدة بيانات حقيقية إطلاقاً، فقط تحليل ملف الـ schema نفسه.
+        run: |
+          mkdir -p "prisma/migrations/$(date -u +%Y%m%d%H%M%S)_init"
+          MIGRATION_DIR="prisma/migrations/$(date -u +%Y%m%d%H%M%S)_init"
+          echo "MIGRATION_DIR=$MIGRATION_DIR" >> "$GITHUB_ENV"
+          npx prisma migrate diff \
+            --from-empty \
+            --to-schema-datamodel prisma/schema.prisma \
+            --script > "$MIGRATION_DIR/migration.sql"
+          wc -l "$MIGRATION_DIR/migration.sql"
+
+      - name: Commit and push migration file
+        run: |
+          git config user.email "ci@edu-platform.local"
+          git config user.name "Edu Platform CI"
+          git add "$MIGRATION_DIR"
+          git commit -m "chore: add baseline Prisma migration generated from current schema"
+          git push
