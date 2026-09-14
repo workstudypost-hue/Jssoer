@@ -13,8 +13,14 @@ generator client {
 }
 
 datasource db {
-  provider = "postgresql"
-  url      = env("DATABASE_URL")
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  // Supabase (وأي Postgres خلف PgBouncer/connection pooler بشكل عام) لا يدعم
+  // عمليات DDL طويلة الأمد مثل migrate deploy عبر رابط الـ pooler (transaction
+  // mode) - تحتاج اتصالًا مباشرًا (session mode / direct connection، عادة
+  // على المنفذ 5432 بدل 6543). DATABASE_URL يبقى للاستعلامات العادية وقت
+  // التشغيل عبر الـ pooler، وDIRECT_URL يُستخدم فقط أثناء migrate/introspect.
+  directUrl = env("DIRECT_URL")
 }
 
 // ============================================================
