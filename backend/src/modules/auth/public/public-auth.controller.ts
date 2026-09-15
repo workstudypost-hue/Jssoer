@@ -116,6 +116,9 @@ export class PublicAuthController {
   private redirectWithTokens(res: Response, tokens: { accessToken: string; refreshToken: string }) {
     const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:3000';
     const fragment = `access_token=${encodeURIComponent(tokens.accessToken)}&refresh_token=${encodeURIComponent(tokens.refreshToken)}`;
-    res.redirect(`${frontendUrl}/auth/oauth-callback#${fragment}`);
+    // ملاحظة: الصفحة موجودة على /oauth-callback (بدون بادئة /auth) لأن (auth)
+    // في مسار الفرونت app/[locale]/(auth)/oauth-callback مجرد Route Group
+    // تنظيمي في Next.js - لا يظهر إطلاقًا داخل الرابط الفعلي.
+    res.redirect(`${frontendUrl}/oauth-callback#${fragment}`);
   }
 }
