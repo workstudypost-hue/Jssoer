@@ -44,6 +44,9 @@ jobs:
     env:
       NODE_ENV: test
       DATABASE_URL: postgresql://postgres:postgres@localhost:5432/edu_platform_ci?schema=public
+      # لا يوجد pooler حقيقي داخل حاوية CI، فنفس الرابط يكفي للاتصالين -
+      # الفصل بين DATABASE_URL/DIRECT_URL له معنى فقط أمام Supabase بالإنتاج.
+      DIRECT_URL: postgresql://postgres:postgres@localhost:5432/edu_platform_ci?schema=public
       REDIS_HOST: localhost
       REDIS_PORT: 6379
       REDIS_PASSWORD: ''
