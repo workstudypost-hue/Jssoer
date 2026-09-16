@@ -70,5 +70,60 @@
     "validation": {
       "passwordTooShort": "Dapat hindi bababa sa 8 karakter ang password"
     }
+  },
+  "Dashboard": {
+    "welcomeTitle": "Welcome 👋",
+    "welcomeSubtitle": "Ito ang personal mong dashboard - subaybayan ang iyong mga kahilingan dito",
+    "loading": "Naglo-load...",
+    "genericError": "Hindi na-load ang iyong data, subukan muli",
+    "logout": "Mag-sign out",
+    "profile": {
+      "title": "Ang iyong profile",
+      "identifier": "Email/Telepono",
+      "role": "Tungkulin",
+      "status": "Status ng account",
+      "joinedAt": "Sumali noong",
+      "statusValues": {
+        "pending_verification": "Naghihintay ng verification",
+        "active": "Aktibo",
+        "suspended": "Suspendido"
+      }
+    },
+    "courses": {
+      "title": "Aking mga kurso",
+      "comingSoon": "Ginagawa pa ang seksyon ng mga kurso - lalabas ito dito kapag handa na"
+    },
+    "customRequests": {
+      "title": "Humiling ng custom na kurso",
+      "titleLabel": "Pamagat ng kahilingan",
+      "titlePlaceholder": "hal. Panimulang kurso sa data analysis",
+      "notesLabel": "Karagdagang detalye (opsyonal)",
+      "notesPlaceholder": "Ilarawan nang detalyado ang iyong kailangan...",
+      "submit": "Ipadala ang kahilingan",
+      "submitting": "Ipinapadala...",
+      "empty": "Wala ka pang naipadalang kahilingan.",
+      "refresh": "I-refresh ang status",
+      "refreshing": "Nire-refresh...",
+      "genericError": "Hindi naipadala ang kahilingan, subukan muli",
+      "status": {
+        "draft": "Draft",
+        "submitted": "Naisumite",
+        "under_review": "Sinusuri",
+        "clarification_needed": "Naghihintay ng paglilinaw mula sa iyo",
+        "priced": "May presyo na",
+        "awaiting_student_approval": "Naghihintay ng iyong pag-apruba",
+        "awaiting_payment": "Naghihintay ng bayad",
+        "approved": "Inaprubahan",
+        "assigned": "Naitalaga sa isang guro",
+        "in_production": "Ginagawa na",
+        "in_internal_review": "Sa internal review",
+        "revision_requested": "Hiningian ng rebisyon",
+        "delivered": "Naihatid",
+        "completed": "Kumpleto",
+        "disputed": "May dispute",
+        "rejected": "Tinanggihan",
+        "cancelled": "Kinansela"
+      }
+    }
   }
 }

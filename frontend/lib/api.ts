@@ -41,6 +41,16 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   return body as T;
 }
 
+/** نفس request لكن يُرفق Authorization: Bearer تلقائيًا - للـ endpoints المحمية بـ JwtAuthGuard. */
+async function authedRequest<T>(path: string, options: RequestInit = {}): Promise<T> {
+  const token = getAccessToken();
+  if (!token) throw new ApiError(401, 'لم يتم تسجيل الدخول');
+  return request<T>(path, {
+    ...options,
+    headers: { ...options.headers, Authorization: `Bearer ${token}` },
+  });
+}
+
 // ============ تخزين التوكنات ============
 
 export function getAccessToken(): string | null {
@@ -141,4 +151,63 @@ export const authApi = {
   /** روابط بدء تدفّق OAuth - Redirect مباشر للمتصفح، ليست طلب fetch */
   googleLoginUrl: () => `${API_BASE_URL}${API_PREFIX}/auth/public/google`,
   microsoftLoginUrl: () => `${API_BASE_URL}${API_PREFIX}/auth/public/microsoft`,
+};
+
+// ============ الملف الشخصي (users/me) ============
+
+export interface UserProfile {
+  id: string;
+  email: string | null;
+  phone: string | null;
+  preferredLocale: AppLocale;
+  status: 'pending_verification' | 'active' | 'suspended';
+  isStaff: boolean;
+  createdAt: string;
+  roles: { role: { name: string } }[];
+  instructorProfile: unknown | null;
+}
+
+export const usersApi = {
+  getMe: () => authedRequest<UserProfile>('/users/me'),
+};
+
+// ============ الطلبات المخصصة (custom-requests) - المتاح فعليًا للطالب حاليًا ============
+
+export type CustomRequestStatus =
+  | 'draft'
+  | 'submitted'
+  | 'under_review'
+  | 'clarification_needed'
+  | 'priced'
+  | 'awaiting_student_approval'
+  | 'awaiting_payment'
+  | 'approved'
+  | 'assigned'
+  | 'in_production'
+  | 'in_internal_review'
+  | 'revision_requested'
+  | 'delivered'
+  | 'completed'
+  | 'disputed'
+  | 'rejected'
+  | 'cancelled';
+
+export interface CustomRequest {
+  id: string;
+  title: string;
+  notes: string | null;
+  status: CustomRequestStatus;
+  createdAt: string;
+}
+
+export const customRequestsApi = {
+  create: (title: string, notes?: string) =>
+    authedRequest<CustomRequest>('/custom-requests', {
+      method: 'POST',
+      body: JSON.stringify({ title, notes }),
+    }),
+
+  submit: (id: string) => authedRequest<CustomRequest>(`/custom-requests/${id}/submit`, { method: 'POST' }),
+
+  getDetails: (id: string) => authedRequest<CustomRequest>(`/custom-requests/${id}`),
 };

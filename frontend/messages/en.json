@@ -70,5 +70,60 @@
     "validation": {
       "passwordTooShort": "Password must be at least 8 characters"
     }
+  },
+  "Dashboard": {
+    "welcomeTitle": "Welcome 👋",
+    "welcomeSubtitle": "This is your personal dashboard - track your requests here",
+    "loading": "Loading...",
+    "genericError": "Couldn't load your data, please try again",
+    "logout": "Sign out",
+    "profile": {
+      "title": "Your profile",
+      "identifier": "Email/Phone",
+      "role": "Role",
+      "status": "Account status",
+      "joinedAt": "Joined on",
+      "statusValues": {
+        "pending_verification": "Pending verification",
+        "active": "Active",
+        "suspended": "Suspended"
+      }
+    },
+    "courses": {
+      "title": "My courses",
+      "comingSoon": "The courses section is being built - it'll show up here once ready"
+    },
+    "customRequests": {
+      "title": "Request a custom course",
+      "titleLabel": "Request title",
+      "titlePlaceholder": "e.g. Intro to data analysis course",
+      "notesLabel": "Additional details (optional)",
+      "notesPlaceholder": "Describe what you need in detail...",
+      "submit": "Send request",
+      "submitting": "Sending...",
+      "empty": "You haven't sent any requests yet.",
+      "refresh": "Refresh status",
+      "refreshing": "Refreshing...",
+      "genericError": "Couldn't send the request, please try again",
+      "status": {
+        "draft": "Draft",
+        "submitted": "Submitted",
+        "under_review": "Under review",
+        "clarification_needed": "Awaiting your clarification",
+        "priced": "Priced",
+        "awaiting_student_approval": "Awaiting your approval",
+        "awaiting_payment": "Awaiting payment",
+        "approved": "Approved",
+        "assigned": "Assigned to an instructor",
+        "in_production": "In production",
+        "in_internal_review": "In internal review",
+        "revision_requested": "Revision requested",
+        "delivered": "Delivered",
+        "completed": "Completed",
+        "disputed": "Disputed",
+        "rejected": "Rejected",
+        "cancelled": "Cancelled"
+      }
+    }
   }
 }

@@ -70,5 +70,60 @@
     "validation": {
       "passwordTooShort": "كلمة المرور يجب ألا تقل عن 8 أحرف"
     }
+  },
+  "Dashboard": {
+    "welcomeTitle": "أهلاً بك 👋",
+    "welcomeSubtitle": "هذي لوحتك الشخصية - تقدر تتابع طلباتك من هنا",
+    "loading": "جارٍ التحميل...",
+    "genericError": "تعذّر تحميل البيانات، حاول مجددًا",
+    "logout": "تسجيل الخروج",
+    "profile": {
+      "title": "ملفك الشخصي",
+      "identifier": "البريد/الهاتف",
+      "role": "الدور",
+      "status": "حالة الحساب",
+      "joinedAt": "تاريخ الانضمام",
+      "statusValues": {
+        "pending_verification": "بانتظار التحقق",
+        "active": "مُفعَّل",
+        "suspended": "موقوف"
+      }
+    },
+    "courses": {
+      "title": "دوراتي",
+      "comingSoon": "قسم الدورات قيد الإنشاء حالياً - راح يظهر هنا فور توفّره"
+    },
+    "customRequests": {
+      "title": "طلب دورة مخصصة",
+      "titleLabel": "عنوان الطلب",
+      "titlePlaceholder": "مثلاً: دورة مقدمة في تحليل البيانات",
+      "notesLabel": "تفاصيل إضافية (اختياري)",
+      "notesPlaceholder": "وضّح احتياجك بالتفصيل...",
+      "submit": "إرسال الطلب",
+      "submitting": "جارٍ الإرسال...",
+      "empty": "ما عندك طلبات مرسلة بعد.",
+      "refresh": "تحديث الحالة",
+      "refreshing": "جارٍ التحديث...",
+      "genericError": "تعذّر إرسال الطلب، حاول مجددًا",
+      "status": {
+        "draft": "مسوّدة",
+        "submitted": "تم الإرسال",
+        "under_review": "قيد المراجعة",
+        "clarification_needed": "بانتظار توضيح منك",
+        "priced": "تم التسعير",
+        "awaiting_student_approval": "بانتظار موافقتك",
+        "awaiting_payment": "بانتظار الدفع",
+        "approved": "تمت الموافقة",
+        "assigned": "تم إسناده لمدرّب",
+        "in_production": "قيد الإنتاج",
+        "in_internal_review": "قيد المراجعة الداخلية",
+        "revision_requested": "طُلب تعديل",
+        "delivered": "تم التسليم",
+        "completed": "مكتمل",
+        "disputed": "قيد النزاع",
+        "rejected": "مرفوض",
+        "cancelled": "أُلغي"
+      }
+    }
   }
 }

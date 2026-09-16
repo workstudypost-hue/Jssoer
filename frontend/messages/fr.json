@@ -70,5 +70,60 @@
     "validation": {
       "passwordTooShort": "Le mot de passe doit contenir au moins 8 caractères"
     }
+  },
+  "Dashboard": {
+    "welcomeTitle": "Bienvenue 👋",
+    "welcomeSubtitle": "Voici votre tableau de bord personnel - suivez vos demandes ici",
+    "loading": "Chargement...",
+    "genericError": "Impossible de charger vos données, veuillez réessayer",
+    "logout": "Se déconnecter",
+    "profile": {
+      "title": "Votre profil",
+      "identifier": "E-mail/Téléphone",
+      "role": "Rôle",
+      "status": "Statut du compte",
+      "joinedAt": "Date d'inscription",
+      "statusValues": {
+        "pending_verification": "En attente de vérification",
+        "active": "Actif",
+        "suspended": "Suspendu"
+      }
+    },
+    "courses": {
+      "title": "Mes cours",
+      "comingSoon": "La section des cours est en cours de construction - elle apparaîtra ici une fois prête"
+    },
+    "customRequests": {
+      "title": "Demander un cours personnalisé",
+      "titleLabel": "Titre de la demande",
+      "titlePlaceholder": "ex. Cours d'introduction à l'analyse de données",
+      "notesLabel": "Détails supplémentaires (facultatif)",
+      "notesPlaceholder": "Décrivez votre besoin en détail...",
+      "submit": "Envoyer la demande",
+      "submitting": "Envoi en cours...",
+      "empty": "Vous n'avez encore envoyé aucune demande.",
+      "refresh": "Actualiser le statut",
+      "refreshing": "Actualisation...",
+      "genericError": "Impossible d'envoyer la demande, veuillez réessayer",
+      "status": {
+        "draft": "Brouillon",
+        "submitted": "Envoyée",
+        "under_review": "En cours d'examen",
+        "clarification_needed": "En attente de précisions de votre part",
+        "priced": "Tarifée",
+        "awaiting_student_approval": "En attente de votre approbation",
+        "awaiting_payment": "En attente de paiement",
+        "approved": "Approuvée",
+        "assigned": "Assignée à un formateur",
+        "in_production": "En production",
+        "in_internal_review": "En revue interne",
+        "revision_requested": "Révision demandée",
+        "delivered": "Livrée",
+        "completed": "Terminée",
+        "disputed": "En litige",
+        "rejected": "Rejetée",
+        "cancelled": "Annulée"
+      }
+    }
   }
 }

@@ -36,21 +36,20 @@ export function AuthShell({
 }
 
 /** علامة تجارية تجريدية: صفحتان متراكبتان بانفتاحة بسيطة - ترمز للتعلّم دون اعتماد اسم غير مؤكَّد بعد. */
-function BrandMark() {
+export function BrandMark({ light }: { light?: boolean }) {
   return (
     <div className="relative z-10 flex items-center gap-2.5">
       <svg width="30" height="30" viewBox="0 0 30 30" fill="none" aria-hidden="true">
-        <path
-          d="M15 6C12 4 7.5 3.5 4 4.5V22c3.5-1 8-0.5 11 1.5V6Z"
-          fill="#C79A3E"
-        />
+        <path d="M15 6C12 4 7.5 3.5 4 4.5V22c3.5-1 8-0.5 11 1.5V6Z" fill="#C79A3E" />
         <path
           d="M15 6C18 4 22.5 3.5 26 4.5V22c-3.5-1-8-0.5-11 1.5V6Z"
-          fill="#EEF1F7"
-          fillOpacity="0.9"
+          fill={light ? '#0D1327' : '#EEF1F7'}
+          fillOpacity={light ? 1 : 0.9}
         />
       </svg>
-      <span className="text-[15px] font-semibold tracking-tight text-white/90">منصّة التعلّم</span>
+      <span className={`text-[15px] font-semibold tracking-tight ${light ? 'text-navy-950' : 'text-white/90'}`}>
+        منصّة التعلّم
+      </span>
     </div>
   );
 }
