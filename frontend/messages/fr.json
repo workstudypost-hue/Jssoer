@@ -97,7 +97,7 @@
       "title": "Demander un cours personnalisé",
       "titleLabel": "Titre de la demande",
       "titlePlaceholder": "ex. Cours d'introduction à l'analyse de données",
-      "notesLabel": "Détails supplémentaires (facultatif)",
+      "notesLabel": "Détails supplémentaires",
       "notesPlaceholder": "Décrivez votre besoin en détail...",
       "submit": "Envoyer la demande",
       "submitting": "Envoi en cours...",
@@ -123,7 +123,13 @@
         "disputed": "En litige",
         "rejected": "Rejetée",
         "cancelled": "Annulée"
-      }
+      },
+      "fileLabel": "Fichier joint",
+      "fileHint": "Tout document qui explique votre besoin (PDF, Word, image...)",
+      "fileRequired": "Vous devez joindre au moins un fichier avant d'envoyer",
+      "progressCreating": "Création de la demande...",
+      "progressUploading": "Envoi du fichier...",
+      "progressSubmitting": "Envoi de la demande..."
     }
   }
 }

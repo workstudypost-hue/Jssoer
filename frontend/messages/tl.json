@@ -97,7 +97,7 @@
       "title": "Humiling ng custom na kurso",
       "titleLabel": "Pamagat ng kahilingan",
       "titlePlaceholder": "hal. Panimulang kurso sa data analysis",
-      "notesLabel": "Karagdagang detalye (opsyonal)",
+      "notesLabel": "Karagdagang detalye",
       "notesPlaceholder": "Ilarawan nang detalyado ang iyong kailangan...",
       "submit": "Ipadala ang kahilingan",
       "submitting": "Ipinapadala...",
@@ -123,7 +123,13 @@
         "disputed": "May dispute",
         "rejected": "Tinanggihan",
         "cancelled": "Kinansela"
-      }
+      },
+      "fileLabel": "Nakalakip na file",
+      "fileHint": "Anumang dokumentong naglalarawan ng iyong kailangan (PDF, Word, larawan...)",
+      "fileRequired": "Kailangan mong maglakip ng kahit isang file bago magpadala",
+      "progressCreating": "Ginagawa ang kahilingan...",
+      "progressUploading": "Ina-upload ang file...",
+      "progressSubmitting": "Ipinapadala ang kahilingan..."
     }
   }
 }

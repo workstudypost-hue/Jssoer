@@ -207,6 +207,28 @@ export const customRequestsApi = {
       body: JSON.stringify({ title, notes }),
     }),
 
+  requestUploadUrl: (id: string, filename: string, contentType: string) =>
+    authedRequest<{ uploadUrl: string; key: string }>(`/custom-requests/${id}/files/upload-url`, {
+      method: 'POST',
+      body: JSON.stringify({ filename, contentType }),
+    }),
+
+  /** رفع مباشر لملف التخزين (S3/R2) عبر الرابط الموقَّع - لا يمر عبر الـ Backend إطلاقًا */
+  uploadFile: async (uploadUrl: string, file: File) => {
+    const res = await fetch(uploadUrl, {
+      method: 'PUT',
+      body: file,
+      headers: { 'Content-Type': file.type },
+    });
+    if (!res.ok) throw new ApiError(res.status, 'تعذّر رفع الملف');
+  },
+
+  addFile: (id: string, fileKey: string, fileType: string) =>
+    authedRequest<unknown>(`/custom-requests/${id}/files`, {
+      method: 'POST',
+      body: JSON.stringify({ fileKey, fileType }),
+    }),
+
   submit: (id: string) => authedRequest<CustomRequest>(`/custom-requests/${id}/submit`, { method: 'POST' }),
 
   getDetails: (id: string) => authedRequest<CustomRequest>(`/custom-requests/${id}`),

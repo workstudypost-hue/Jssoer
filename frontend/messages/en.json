@@ -97,7 +97,7 @@
       "title": "Request a custom course",
       "titleLabel": "Request title",
       "titlePlaceholder": "e.g. Intro to data analysis course",
-      "notesLabel": "Additional details (optional)",
+      "notesLabel": "Additional details",
       "notesPlaceholder": "Describe what you need in detail...",
       "submit": "Send request",
       "submitting": "Sending...",
@@ -123,7 +123,13 @@
         "disputed": "Disputed",
         "rejected": "Rejected",
         "cancelled": "Cancelled"
-      }
+      },
+      "fileLabel": "Attached file",
+      "fileHint": "Any document that explains what you need (PDF, Word, image...)",
+      "fileRequired": "You need to attach at least one file before sending",
+      "progressCreating": "Creating request...",
+      "progressUploading": "Uploading file...",
+      "progressSubmitting": "Sending request..."
     }
   }
 }

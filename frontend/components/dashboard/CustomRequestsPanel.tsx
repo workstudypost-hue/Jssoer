@@ -29,7 +29,9 @@ export function CustomRequestsPanel() {
   const [requests, setRequests] = useState<CustomRequest[]>([]);
   const [title, setTitle] = useState('');
   const [notes, setNotes] = useState('');
+  const [file, setFile] = useState<File | null>(null);
   const [submitting, setSubmitting] = useState(false);
+  const [progressLabel, setProgressLabel] = useState<string | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshingId, setRefreshingId] = useState<string | null>(null);
 
@@ -40,19 +42,36 @@ export function CustomRequestsPanel() {
   async function handleSubmit(event: FormEvent) {
     event.preventDefault();
     setError(null);
+
+    if (!file) {
+      setError(t('fileRequired'));
+      return;
+    }
+
     setSubmitting(true);
     try {
-      const created = await customRequestsApi.create(title.trim(), notes.trim() || undefined);
+      setProgressLabel(t('progressCreating'));
+      const created = await customRequestsApi.create(title.trim(), notes.trim());
+
+      setProgressLabel(t('progressUploading'));
+      const { uploadUrl, key } = await customRequestsApi.requestUploadUrl(created.id, file.name, file.type);
+      await customRequestsApi.uploadFile(uploadUrl, file);
+      await customRequestsApi.addFile(created.id, key, file.type);
+
+      setProgressLabel(t('progressSubmitting'));
       const submitted = await customRequestsApi.submit(created.id);
+
       const updated = [submitted, ...requests];
       setRequests(updated);
       saveStoredRequests(updated);
       setTitle('');
       setNotes('');
+      setFile(null);
     } catch (err) {
       setError(err instanceof ApiError ? err.message : t('genericError'));
     } finally {
       setSubmitting(false);
+      setProgressLabel(null);
     }
   }
 
@@ -92,10 +111,27 @@ export function CustomRequestsPanel() {
             value={notes}
             onChange={(event) => setNotes(event.target.value)}
             placeholder={t('notesPlaceholder')}
+            required
             className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none transition-colors placeholder:text-slate-400 focus:border-navy-700 focus:ring-2 focus:ring-navy-700/15"
           />
         </div>
-        <SubmitButton loading={submitting} loadingLabel={t('submitting')} className="sm:w-auto sm:self-start sm:px-8">
+        <div className="flex flex-col gap-1.5">
+          <label htmlFor="request-file" className="text-sm font-medium text-navy-900">
+            {t('fileLabel')}
+          </label>
+          <input
+            id="request-file"
+            type="file"
+            onChange={(event) => setFile(event.target.files?.[0] ?? null)}
+            className="w-full rounded-lg border border-slate-300 bg-white px-3.5 py-2.5 text-[15px] text-ink outline-none file:me-3 file:rounded-md file:border-0 file:bg-navy-50 file:px-3 file:py-1.5 file:text-sm file:font-medium file:text-navy-900"
+          />
+          <p className="text-sm text-slate-500">{t('fileHint')}</p>
+        </div>
+        <SubmitButton
+          loading={submitting}
+          loadingLabel={progressLabel ?? t('submitting')}
+          className="sm:w-auto sm:self-start sm:px-8"
+        >
           {t('submit')}
         </SubmitButton>
       </form>

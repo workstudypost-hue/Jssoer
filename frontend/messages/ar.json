@@ -97,7 +97,7 @@
       "title": "طلب دورة مخصصة",
       "titleLabel": "عنوان الطلب",
       "titlePlaceholder": "مثلاً: دورة مقدمة في تحليل البيانات",
-      "notesLabel": "تفاصيل إضافية (اختياري)",
+      "notesLabel": "تفاصيل إضافية",
       "notesPlaceholder": "وضّح احتياجك بالتفصيل...",
       "submit": "إرسال الطلب",
       "submitting": "جارٍ الإرسال...",
@@ -123,7 +123,13 @@
         "disputed": "قيد النزاع",
         "rejected": "مرفوض",
         "cancelled": "أُلغي"
-      }
+      },
+      "fileLabel": "ملف مرفق",
+      "fileHint": "أي مستند يوضّح احتياجك (PDF, Word, صورة...)",
+      "fileRequired": "لازم ترفع ملف واحد على الأقل قبل الإرسال",
+      "progressCreating": "جارٍ إنشاء الطلب...",
+      "progressUploading": "جارٍ رفع الملف...",
+      "progressSubmitting": "جارٍ إرسال الطلب..."
     }
   }
 }
