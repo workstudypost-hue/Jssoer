@@ -18,8 +18,11 @@ export class JwtStrategy extends PassportStrategy(Strategy, 'jwt') {
     });
   }
 
-  // القيمة المُرجَعة هنا تُحقن تلقائيًا في request.user
+  // القيمة المُرجَعة هنا تُحقن تلقائيًا في request.user. نُضيف userId كمرادف
+  // صريح لـ sub (بدل استخدام sub وحده) لأن بعض الخدمات (custom-requests
+  // تحديدًا) تتوقع actor.userId بشكل صريح - الإبقاء على sub أيضًا يحافظ على
+  // التوافق مع بقية الكود الذي يقرأ req.user.sub مباشرة فلا داعي لتعديله.
   async validate(payload: JwtPayload) {
-    return payload;
+    return { ...payload, userId: payload.sub };
   }
 }
